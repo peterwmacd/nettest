@@ -19,9 +19,6 @@ Asymp_TW(A, B, sig, r)
 acceptance/rejection decision & p-value for a normal distribution
 }
 \description{
-Tracy Widom Test
-}
-\details{
 The TW test is a two-sample testing procedure for large graphs.
 The TW test is based on the Wishart distribution and uses the Tracy-Widom law to approximate the null distribution of a test statistic.\cr\cr
 The TW test then uses the Tracy-Widom law to approximate the null distribution of T_TW under certain assumptions about the underlying distributions.

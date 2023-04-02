@@ -124,7 +124,6 @@ LowRankTests <- function(A, B, r, sig, bs) {
 #'
 #' This function computes the test statistics for Boot-ASE/EPA test, serving as an auxiliary functions for the function: LowRankTests
 #'
-#'
 #' @param A1 a sparse EPAacency matrix
 #' @param B1 a sparse EPAacency matrix
 #' @param r scalar specifying rank of population EPAacency

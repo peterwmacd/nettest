@@ -1,6 +1,6 @@
 library(Matrix)
 library(irlba)
-
+library(RMTstat)
 
 # TW Test -----------------------------------------------------------------
 
@@ -16,20 +16,16 @@ library(irlba)
 
 # Example: Asymp_TW(simu$A_G, simu$A_H, 0.05, 2)
 
-library(RMTstat)
+
 
 
 #' Tracy Widom Test
-#'
-#'
-#'
 #'
 #'
 #' The TW test is a two-sample testing procedure for large graphs.
 #' The TW test is based on the Wishart distribution and uses the Tracy-Widom law to approximate the null distribution of a test statistic.\cr\cr
 #' The TW test then uses the Tracy-Widom law to approximate the null distribution of T_TW under certain assumptions about the underlying distributions.
 #' If the value of T_TW exceeds a certain threshold, then the null hypothesis (i.e., both populations have the same population adjacency) is rejected.
-#'
 #'
 #' @param A cell array containing networks in 1st population; each cell is a sparse adjacency matrix
 #' @param B cell array containing networks in 2nd population, each cell being a sparse adjacency matrix
