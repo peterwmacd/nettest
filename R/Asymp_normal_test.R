@@ -18,7 +18,16 @@ library(irlba)
 
 # Example: Asymp_normal(simu$A_G, simu$A_H, 0.05)
 
+
+
+
+
 #' Asymptotic Normal Test
+#'
+#'
+#' The Asymp-Normal test is an asymptotic test for two-sample testing of large graphs.
+#' It is used to determine whether two graphs (or graph populations) have the same population adjacency.\cr\cr
+#' The test involves computing rejection decision and the p-value, which is the probability that the null hypothesis (i.e., both graphs have the same population adjacency) is true.
 #'
 #' @param A cell array containing networks in 1st population; each cell is a sparse adjacency matrix
 #' @param B cell array containing networks in 2nd population, each cell being a sparse adjacency matrix
