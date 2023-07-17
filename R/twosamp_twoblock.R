@@ -1,4 +1,4 @@
-# Simulating block model networks with two blocks
+# Simulating stochastic block model networks with two blocks
 
 # helper: random binary, undirected network with no self loops
 rand_net <- function(P){
