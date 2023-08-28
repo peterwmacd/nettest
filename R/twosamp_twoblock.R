@@ -26,5 +26,3 @@ twosamp_twoblock <- function(n,m,p,q,epsilon){
   A_H <- lapply(1:m,function(x){rand_net(P_H)})
   return(list(A_G=A_G,A_H=A_H))
 }
-
-# dummy comment
