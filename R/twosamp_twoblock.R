@@ -27,4 +27,4 @@ twosamp_twoblock <- function(n,m,p,q,epsilon){
   return(list(A_G=A_G,A_H=A_H))
 }
 
-# dummy comment
+# smart comment
