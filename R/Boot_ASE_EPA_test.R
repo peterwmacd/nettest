@@ -1,6 +1,6 @@
 library(Matrix)
 library(irlba)
-
+library(abind)
 
 # Boot-ASE/EPA Test -------------------------------------------------------
 
@@ -136,36 +136,116 @@ LowRankTests <- function(A, B, r, sig, bs) {
 #' Boot_ASE_computeStat(simu$A_G[[1]], simu$A_H[[1]], 100)
 #'
 #'
-Boot_ASE_computeStat <- function(A1, B1, r) {
-  # svd of A1
-  u1svd <- svd(as.matrix(A1))
-  u1 <- u1svd$u[,1:r]
-  s1 <- diag(u1svd$d[1:r])
-  v1 <- u1svd$v[,1:r]
+# Boot_ASE_computeStat <- function(A1, B1, r) {
+  # # svd of A1
+  # u1svd <- svd(as.matrix(A1))
+  # u1 <- u1svd$u[,1:r]
+  # s1 <- diag(u1svd$d[1:r])
+  # v1 <- u1svd$v[,1:r]
+  #
+  # # svd of B1
+  # u2svd <- svd(as.matrix(B1))
+  # u2 <- u2svd$u[,1:r]
+  # s2 <- diag(u2svd$d[1:r])
+  # v2 <- u2svd$v[,1:r]
+  #
+  # X <- u1 %*% sqrt(s1)
+  # Y <- u2 %*% sqrt(s2)
+  #
+  # # compute W
+  # uvSVD <- svd(t(X) %*% Y)
+  # W <- uvSVD$u %*% uvSVD$v
+  # stats <- numeric(2)
+  #
+  # # ASE statistic
+  # # min_W||X-YW||_F solved using orthogonal Procrustes problem, whose solution
+  # # is Wopt = UV' where X'Y = USV'
+  # stats[1] <- norm(X - Y %*% W, type = "F")
+  #
+  # # EPA statistic (difference of estimated population EPAacencies)
+  # stats[2] <- norm(u1 %*% s1 %*% t(v1) - u2 %*% s2 %*% t(v2), type = "F")
+  # return(stats)
+# }
 
-  # svd of B1
-  u2svd <- svd(as.matrix(B1))
-  u2 <- u2svd$u[,1:r]
-  s2 <- diag(u2svd$d[1:r])
-  v2 <- u2svd$v[,1:r]
 
-  X <- u1 %*% sqrt(s1)
-  Y <- u2 %*% sqrt(s2)
 
-  # compute W
-  uvSVD <- svd(t(X) %*% Y)
-  W <- uvSVD$u %*% uvSVD$v
-  stats <- numeric(2)
+# consider m = 1 and m >1
+Boot_ASE_computeStat <- function(A_set, B_set, r) {
 
-  # ASE statistic
-  # min_W||X-YW||_F solved using orthogonal Procrustes problem, whose solution
-  # is Wopt = UV' where X'Y = USV'
-  stats[1] <- norm(X - Y %*% W, type = "F")
 
-  # EPA statistic (difference of estimated population EPAacencies)
-  stats[2] <- norm(u1 %*% s1 %*% t(v1) - u2 %*% s2 %*% t(v2), type = "F")
-  return(stats)
+  if (length(A_set) > 1){
+    print("input m > 1")
+    # Calculate the element-wise average
+    A_average_matrix <- matrix(0, nrow = nrow(A_set[[1]]), ncol = ncol(A_set[[1]]))
+    B_average_matrix <- matrix(0, nrow = nrow(B_set[[1]]), ncol = ncol(B_set[[1]]))
+    for (i in 1:length(A_set)) {
+      A_average_matrix <- A_average_matrix + A_set[[i]]
+      B_average_matrix <- B_average_matrix + B_set[[i]]
+    }
+    A1 <- A_average_matrix / length(A_set)
+    B1 <- B_average_matrix / length(B_set)
+
+    u1svd <- svd(A1)
+    u1 <- u1svd$u[, 1:r]
+    s1 <- diag(u1svd$d[1:r])
+    v1 <- u1svd$v[, 1:r]
+
+    # svd of B1
+    u2svd <- svd(B1)
+    u2 <- u2svd$u[, 1:r]
+    s2 <- diag(u2svd$d[1:r])
+    v2 <- u2svd$v[, 1:r]
+
+    X <- u1 %*% sqrt(s1)
+    Y <- u2 %*% sqrt(s2)
+
+    # compute W
+    uvSVD <- svd(t(X) %*% Y)
+    W <- uvSVD$u %*% uvSVD$v
+    stats <- numeric(2)
+
+    # ASE statistic
+    stats[1] <- norm(X - Y %*% W, type = "F")
+
+    # EPA statistic (difference of estimated population EPAacencies)
+    stats[2] <- norm(u1 %*% s1 %*% t(v1) - u2 %*% s2 %*% t(v2), type = "F")
+    return(stats)
+
+  } else if (length(A_set) == 1){
+    print("input m = 1")
+    A1 = A_set[[1]]
+    B1 = B_set[[1]]
+    # svd of A1
+    u1svd <- svd(as.matrix(A1))
+
+    u1 <- u1svd$u[,1:r]
+    s1 <- diag(u1svd$d[1:r])
+    v1 <- u1svd$v[,1:r]
+
+    # svd of B1
+    u2svd <- svd(as.matrix(B1))
+    u2 <- u2svd$u[,1:r]
+    s2 <- diag(u2svd$d[1:r])
+    v2 <- u2svd$v[,1:r]
+
+    X <- u1 %*% sqrt(s1)
+    Y <- u2 %*% sqrt(s2)
+
+    # compute W
+    uvSVD <- svd(t(X) %*% Y)
+    W <- uvSVD$u %*% uvSVD$v
+    stats <- numeric(2)
+
+    # ASE statistic
+    # min_W||X-YW||_F solved using orthogonal Procrustes problem, whose solution
+    # is Wopt = UV' where X'Y = USV'
+    stats[1] <- norm(X - Y %*% W, type = "F")
+
+    # EPA statistic (difference of estimated population EPAacencies)
+    stats[2] <- norm(u1 %*% s1 %*% t(v1) - u2 %*% s2 %*% t(v2), type = "F")
+    return(stats)
+  }
+  else {
+    stop("not list")
+  }
 }
-
-
-
