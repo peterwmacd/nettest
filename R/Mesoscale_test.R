@@ -21,15 +21,14 @@ Tpinv <- function(M,r){
 }
 
 # onestep projection estimator
-# takes the data, dimension, test_set, masked_set (default empty)
-# both sets as 'rectangles', list of (row,col)
+# takes the data, dimension, hyp_indices, masked_indices (default empty)
 # returns left and righthand side o/n bases
 Subspace_onestep <- function(A1bar,A2bar,d,
-                             test_indices,
+                             hyp_indices,
                              masked_indices=NULL){
   n <- nrow(A1bar)
   s_ind <- matrix(0,n,n)
-  s_ind[rbind(test_indices,masked_indices)] <- 1
+  s_ind[rbind(hyp_indices,masked_indices)] <- 1
   mrow <- which(rowSums(s_ind)>0)
   mcol <- which(colSums(s_ind)>0)
   # estimate blocks
@@ -46,13 +45,12 @@ Subspace_onestep <- function(A1bar,A2bar,d,
 }
 
 # projection estimates with hard imputation
-# takes the data, dimension, test_set, masked_set (default empty)
-# both sets as 'rectangles', list of (row,col)
+# takes the data, dimension, hyp_indices, masked_indices (default empty)
 # returns left and righthand side o/n bases
 Subspace_impute <- function(A1bar,A2bar,d,
-                            test_indices,
+                            hyp_indices,
                             masked_indices=NULL){
-  uindices <- rbind(test_indices,masked_indices)
+  uindices <- rbind(hyp_indices,masked_indices)
   # estimate blocks
   Adiff <- A1bar - A2bar
   Adiff[uindices] <- NA
@@ -65,17 +63,17 @@ Subspace_impute <- function(A1bar,A2bar,d,
 }
 
 # binary_meso helper for logistic model
-# takes the data, test_set, projections, variance option
+# takes the data, hyp_set, projections, variance option
 # returns the pvalue and rejection decision
 Binary_meso <- function(A,B,
-                        test_indices,
-                        test_proj,
+                        hyp_indices,
+                        hyp_proj,
                         var_type){
   # left/right objects
-  Lproj <- test_proj$Lproj
-  Rproj <- test_proj$Rproj
+  Lproj <- hyp_proj$Lproj
+  Rproj <- hyp_proj$Rproj
   # dimensions
-  ss <- nrow(test_indices)
+  ss <- nrow(hyp_indices)
   m <- length(A)
   n <- nrow(A[[1]])
   # reset tilde if m is 1
@@ -85,7 +83,7 @@ Binary_meso <- function(A,B,
   dd <- ncol(Lproj)*ncol(Rproj)
   # orthonormal basis
   s_ind <- matrix(FALSE,n,n)
-  s_ind[test_indices] <- TRUE
+  s_ind[hyp_indices] <- TRUE
   UV <- (Rproj %x% Lproj)[c(s_ind),]
   # common subspace
   X <- rbind(UV,UV)
@@ -96,7 +94,7 @@ Binary_meso <- function(A,B,
   # populate full successes
   s_vec <- rep(0,2*ss)
   for(kk in 1:m){
-    s_vec <- s_vec + c(A[[kk]][test_indices],B[[kk]][test_indices])
+    s_vec <- s_vec + c(A[[kk]][hyp_indices],B[[kk]][hyp_indices])
   }
   # calculate failures
   f_vec <- m - s_vec
@@ -136,33 +134,33 @@ Binary_meso <- function(A,B,
 
 
 # weight_meso2 helper for Gaussian model
-# takes the data, test_set, projections, variance option (basic, quasi)
+# takes the data, hyp_set, projections, variance option (basic, quasi)
 # returns the pvalue and rejection decision
 ## avoids using rectangular properties
 ## assumes n x d input projection matrices
 ## assumes hypothesis set passed as a 2 column matrix of indices
 Weight_meso <- function(A,B,
-                        test_indices,
-                        test_proj,
+                        hyp_indices,
+                        hyp_proj,
                         var_type){
   # left/right objects
-  Lproj <- test_proj$Lproj
-  Rproj <- test_proj$Rproj
+  Lproj <- hyp_proj$Lproj
+  Rproj <- hyp_proj$Rproj
   # dimensions
-  ss <- nrow(test_indices)
+  ss <- nrow(hyp_indices)
   m <- length(A)
   n <- nrow(A[[1]])
   # augmented data approach
   dd <- ncol(Lproj)*ncol(Rproj)
   # orthonormal basis
   s_ind <- matrix(FALSE,n,n)
-  s_ind[test_indices] <- TRUE
+  s_ind[hyp_indices] <- TRUE
   UV <- svd((Rproj %x% Lproj)[c(s_ind),])$u
   # test
   X <- Y <- matrix(NA,m,dd)
   for(kk in 1:m){
-    X[kk,] <- c(crossprod(UV, c(A[[kk]][test_indices])))
-    Y[kk,] <- c(crossprod(UV, c(B[[kk]][test_indices]))) ### can rewrite this with sapply
+    X[kk,] <- c(crossprod(UV, c(A[[kk]][hyp_indices])))
+    Y[kk,] <- c(crossprod(UV, c(B[[kk]][hyp_indices]))) ### can rewrite this with sapply
   }
   # basic F test on augmented data assuming equal variance, independence
   # sse values
@@ -170,8 +168,8 @@ Weight_meso <- function(A,B,
   sse_alt <- sum((scale(X,scale=F))^2) + sum((scale(Y,scale=F))^2)
   # adjustment for tilde
   if(var_type=='quasi'){
-    Xa <- (diag(ss) - tcrossprod(UV)) %*% sapply(A,function(x){x[test_indices]})
-    Ya <- (diag(ss) - tcrossprod(UV)) %*% sapply(B,function(x){x[test_indices]})
+    Xa <- (diag(ss) - tcrossprod(UV)) %*% sapply(A,function(x){x[hyp_indices]})
+    Ya <- (diag(ss) - tcrossprod(UV)) %*% sapply(B,function(x){x[hyp_indices]})
     sse_alt_den <- sum(Xa^2) + sum(Ya^2)
     df_den <- 2*m*(ss - dd)
   }
@@ -188,25 +186,29 @@ Weight_meso <- function(A,B,
 }
 
 Mesoscale_test <- function(A,B,sig,
-                           test_set, # a list of (row,col) # TODO: a 2-column matrix of entries
+                           hyp_set, # a rectangle (list of {row,col}), a 2-column matrix of entries, or a list if rectangles
                            edge_type='weighted',# or binary
                            # other options
                            dimension,
                            # symmetric = FALSE ## TODO
+                           # self_loops = TRUE ## TODO, overrides diagonal entries in the hyp_set
                            proj_type='impute',# or onestep
                            var_type='basic', # or 'quasi'
-                           masked_set=list(NULL,NULL) # as a list of (row,col) # TODO: a 2-column matrix of entries, or a list of rectangles???
+                           masked_set=list(NULL,NULL) # a rectangle (list of {row,col}), a 2-column matrix of entries, or a list if rectangles
 ){
   # parameter checking
-
+  # ...
   # does the test set specify a rectangle
-  if(is.matrix(test_set)){
-    rect <- FALSE
-    test_indices <- test_set
+  if(is.matrix(hyp_set)){
+    hyp_indices <- hyp_set
   }
   else{
-    rect <- TRUE
-    test_indices <- as.matrix(expand.grid(test_set))
+    if(is.list(hyp_set[[1]])){
+      hyp_indices <- Reduce(rbind,lapply(hyp_set,function(x){as.matrix(expand.grid(x))}))
+    }
+    else{
+      hyp_indices <- as.matrix(expand.grid(hyp_set))
+    }
   }
 
   # does the masked set specify a rectangle
@@ -215,16 +217,20 @@ Mesoscale_test <- function(A,B,sig,
       masked_indices <- masked_set
     }
     else{
-      masked_indices <- as.matrix(expand.grid(masked_set))
-      if(nrow(masked_indices)==0){
-        masked_indices <- NULL
+      if(is.list(masked_set[[1]])){
+        masked_indices <- Reduce(rbind,lapply(masked_set,function(x){as.matrix(expand.grid(x))}))
+      }
+      else{
+        masked_indices <- as.matrix(expand.grid(masked_set))
+        if(nrow(masked_indices)==0){
+          masked_indices <- NULL
+        }
       }
     }
   }
   else{
     masked_indices <- NULL
   }
-
   # dimensions
   m <- length(A)
   n <- nrow(A[[1]])
@@ -239,17 +245,17 @@ Mesoscale_test <- function(A,B,sig,
   }
   # learn left and right-hand side projections
   if(proj_type=='impute'){
-    test_proj <- Subspace_impute(Abar,Bbar,dimension,test_indices,masked_indices)
+    hyp_proj <- Subspace_impute(Abar,Bbar,dimension,hyp_indices,masked_indices)
   }
   else{
-    test_proj <- Subspace_onestep(Abar,Bbar,dimension,test_indices,masked_indices)
+    hyp_proj <- Subspace_onestep(Abar,Bbar,dimension,hyp_indices,masked_indices)
   }
   # test procedures
   if(edge_type=='weighted'){
-    test_out <- Weight_meso(A,B,test_indices,test_proj,var_type)
+    test_out <- Weight_meso(A,B,test_indices,hyp_proj,var_type)
   }
   else{
-    test_out <- Binary_meso(A,B,test_indices,test_proj,var_type)
+    test_out <- Binary_meso(A,B,test_indices,hyp_proj,var_type)
   }
   # returns acceptance/rejection decision and a pvalue
   return(c(as.integer(test_out$pval <= sig),test_out$pval))
