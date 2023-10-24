@@ -25,8 +25,16 @@ Tpinv <- function(M,r){
 # returns left and righthand side o/n bases
 Subspace_onestep <- function(A1bar,A2bar,d,
                              hyp_indices,
-                             masked_indices=NULL){
+                             masked_indices,
+                             self_loops){
+  # if no self loops, check for diagonal NAs and replace with 0's
+  if(!self_loops & any(is.na(c(diag(A1bar),diag(A2bar))))){
+    diag(A1bar) <- 0
+    diag(A2bar) <- 0
+  }
+  # dimension
   n <- nrow(A1bar)
+  # compute masked rows/columns
   s_ind <- matrix(0,n,n)
   s_ind[rbind(hyp_indices,masked_indices)] <- 1
   mrow <- which(rowSums(s_ind)>0)
@@ -49,10 +57,14 @@ Subspace_onestep <- function(A1bar,A2bar,d,
 # returns left and righthand side o/n bases
 Subspace_impute <- function(A1bar,A2bar,d,
                             hyp_indices,
-                            masked_indices=NULL){
+                            masked_indices,
+                            self_loops){
   uindices <- rbind(hyp_indices,masked_indices)
   # estimate blocks
   Adiff <- A1bar - A2bar
+  if(!self_loops){
+    diag(Adiff) <- NA
+  }
   Adiff[uindices] <- NA
   # esimate subspaces
   impdiff <- softImpute::softImpute(Adiff,rank.max=d,lambda=0,type='svd')
@@ -191,7 +203,7 @@ Mesoscale_test <- function(A,B,sig,
                            # other options
                            dimension,
                            # symmetric = FALSE ## TODO
-                           # self_loops = TRUE ## TODO, overrides diagonal entries in the hyp_set
+                           self_loops = TRUE # overrides diagonal entries in the hyp_set, masks them in the imputation routine
                            proj_type='impute',# or onestep
                            var_type='basic', # or 'quasi'
                            masked_set=list(NULL,NULL) # a rectangle (list of {row,col}), a 2-column matrix of entries, or a list if rectangles
@@ -231,6 +243,16 @@ Mesoscale_test <- function(A,B,sig,
   else{
     masked_indices <- NULL
   }
+
+  # account for self loops
+  if(!self_loops){
+    hyp_sl <- test_indices[,1]==test_indices[,2]
+    if(sum(hyp_sl) > 0){
+      masked_indices <- rbind(masked_indices,test_indices[hyp_sl,])
+      test_indices <- test_indices[!hyp_sl,]
+    }
+  }
+
   # dimensions
   m <- length(A)
   n <- nrow(A[[1]])
@@ -245,17 +267,27 @@ Mesoscale_test <- function(A,B,sig,
   }
   # learn left and right-hand side projections
   if(proj_type=='impute'){
-    hyp_proj <- Subspace_impute(Abar,Bbar,dimension,hyp_indices,masked_indices)
+    hyp_proj <- Subspace_impute(Abar,Bbar,
+                                dimension,
+                                hyp_indices,masked_indices,
+                                self_loops)
   }
   else{
-    hyp_proj <- Subspace_onestep(Abar,Bbar,dimension,hyp_indices,masked_indices)
+    hyp_proj <- Subspace_onestep(Abar,Bbar,
+                                 dimension,
+                                 hyp_indices,masked_indices,
+                                 self_loops)
   }
   # test procedures
   if(edge_type=='weighted'){
-    test_out <- Weight_meso(A,B,test_indices,hyp_proj,var_type)
+    test_out <- Weight_meso(A,B,
+                            hyp_indices,hyp_proj,
+                            var_type)
   }
   else{
-    test_out <- Binary_meso(A,B,test_indices,hyp_proj,var_type)
+    test_out <- Binary_meso(A,B,
+                            hyp_indices,hyp_proj,
+                            var_type)
   }
   # returns acceptance/rejection decision and a pvalue
   return(c(as.integer(test_out$pval <= sig),test_out$pval))
