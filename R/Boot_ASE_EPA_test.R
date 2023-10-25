@@ -56,7 +56,7 @@ library(abind)
 LowRankTests <- function(A, B, r, sig, bs) {
 
   # compute the test statistic
-  testStat <- Boot_ASE_computeStat(A[[1]], B[[1]], r)
+  testStat <- Boot_ASE_computeStat(A, B, r)
   # bootstrap
   bsStat <- matrix(0, nrow = bs, ncol = 2)
 

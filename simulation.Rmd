@@ -37,14 +37,22 @@ twosamp_twoblock <- function(n,m,p,q,epsilon){
 ```
 
 ```{r}
-simu = twosamp_twoblock(n = 4,
-                        m = 4, 
+simu = twosamp_twoblock(n = 6,
+                        m = 1, 
                         p = 0.3, 
                         q = 0.3, 
                         epsilon = 0.7
                           )
-Boot_ASE_computeStat(simu$A_G, simu$A_H, 4)
+#Boot_ASE_computeStat(simu$A_G, simu$A_H, 4)
+LowRankTests(simu$A_G, simu$A_H, 4, 0.05, 20)
 ```
+
+```{r}
+Asymp_TW(simu$A_G, simu$A_H, 0.05, 3)
+spectral_clus(simu$A_G, simu$A_H, 2)
+```
+
+
 
 ```{r}
 simu_m1 = twosamp_twoblock(n = 8,
@@ -55,3 +63,141 @@ simu_m1 = twosamp_twoblock(n = 8,
                           )
 Boot_ASE_computeStat(simu_m1$A_G, simu_m1$A_G, 8)
 ```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Test for Asymp third power func
+
+```{r}
+num_n = 4
+simu = twosamp_twoblock(n = num_n,
+                        m = 3, 
+                        p = 0.1, 
+                        q = 0.7, 
+                        epsilon = 0.1
+                          )
+simu$A_G
+simu$A_H
+```
+
+```{r}
+Reduce("+", simu$A_G) / length(simu$A_G) - Reduce("+", simu$A_H) / length(simu$A_H)
+```
+
+
+```{r}
+m1 = length(simu$A_G) # m1
+m2 = length(simu$A_H) # m2
+a = Reduce("+", simu$A_G) / length(simu$A_G)
+b = Reduce("+", simu$A_H) / length(simu$A_H)
+n = nrow(a) # nrow(Auij) should be = nrow(Buij)
+  
+d = (a - b) / sqrt(n * ((a) * (1 - a) / m1 + b * (1 - b) / m2))
+d
+```
+
+```{r}
+c = matrix(0, num_n, num_n)
+  # Fill the diagonal with -1/√n and 1/√n with equal probability
+  for (i in 1:num_n) {
+    if (runif(1) < 0.5) {
+      c[i, i] = -1/sqrt(n)
+    } else {
+      c[i, i] = 1/sqrt(n)
+    }
+  }
+
+diag(c)
+```
+
+```{r}
+diag(d) = diag(c)
+```
+
+```{r}
+sum(diag(b %*% b%*%b)) / sqrt(15)
+```
+
+
+
+
+```{r}
+a <- function(A, B, sig, r = 2) {
+
+  # size for each of the group
+  m1 = length(A) # m1
+  m2 = length(B) # m2
+
+  # Compute sample average for each group
+  Auij = Reduce("+", A) / length(A)
+  Buij = Reduce("+", B) / length(B)
+
+  # get n
+  n = nrow(Auij) # nrow(Auij) should be = nrow(Buij)
+
+  # Calculate Zij
+  Zij = matrix(0, n, n)
+
+  ## Calculate Zij, When i!=j, non-diag
+  numer = Auij - Buij # {A_bar}1, ij - {A_bar}2, ij
+  denom = sqrt(n * ((Auij) * (1 - Auij) / m1 + Buij * (1 - Buij) / m2))
+  
+  nondiag_z = numer / denom
+
+  ## Calculate Zij, when i = j, diag
+  Bij = matrix(0, n, n)
+  for (i in 1:n) {
+    if (runif(1) < 0.5) {
+      Bij[i, i] = -1/sqrt(n)
+    } else {
+      Bij[i, i] = 1/sqrt(n)
+    }
+  }
+
+  # Get Zij
+  Zij = nondiag_z
+  diag(Zij) = diag(Bij)
+  print(Zij)
+  # Compute test statistics
+  Z_cubed <- Zij %*% Zij %*% Zij
+  test.stat = sum(diag(Z_cubed)) / sqrt(15) # trace operator: sum of the diagonal elements
+  # p value
+  p.val <- 1 - pnorm(test.stat)
+  test <- ifelse(p.val <= sig, 1, 0)
+
+  return(Zij)
+}
+```
+
+```{r}
+a1 = Reduce("+", simu$A_G) / length(simu$A_G)
+b1 = Reduce("+", simu$A_H) / length(simu$A_H)
+
+spectral_clus(simu$A_G, simu$A_H, 2)
+```
+
+
+```{r}
+f = a(simu$A_G, simu$A_H, 0.05)
+f %*% f %*% f 
+```
+
+```{r}
+1 - pnorm(sum(diag(f %*% f %*% f )) / sqrt(15))
+```
+
+
