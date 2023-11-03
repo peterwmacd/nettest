@@ -4,6 +4,7 @@
 # softImpute
 # irlba
 # stats
+# pracma
 
 # helper functions:
 
@@ -20,13 +21,34 @@ Tpinv <- function(M,r){
   return(out)
 }
 
+# calculate the pseudoinverse matrix for enforcing symmetry constraints
+Sym_span <- function(s_ind,s_ind_tri){
+  # reordered hypothesis set and upper triangle
+  ind <- which(s_ind,arr.ind=TRUE)
+  ind_tri <- which(s_ind_tri,arr.ind=TRUE)
+  # G dimensions
+  n_ind <- nrow(ind)
+  n_ind_tri <- nrow(ind_tri)
+  # construct G matrix
+  G <- matrix(0,n_ind,n_ind_tri)
+  for(kk in 1:n_ind){
+    entry <- ind[kk,]
+    tri_index <- which(((entry[1] == ind_tri[,1]) & (entry[2] == ind_tri[,2])) | ((entry[1] == ind_tri[,2]) & (entry[2] == ind_tri[,1])))
+    G[kk,tri_index] <- 1
+  }
+  # (left) pseudoinverse
+  Gd <- t(t(G)/colSums(G))
+  return(Gd)
+}
+
 # onestep projection estimator
 # takes the data, dimension, hyp_indices, masked_indices (default empty)
 # returns left and righthand side o/n bases
 Subspace_onestep <- function(A1bar,A2bar,d,
                              hyp_indices,
                              masked_indices,
-                             self_loops){
+                             self_loops,
+                             directed){
   # if no self loops, check for diagonal NAs and replace with 0's
   if(!self_loops & any(is.na(c(diag(A1bar),diag(A2bar))))){
     diag(A1bar) <- 0
@@ -45,10 +67,16 @@ Subspace_onestep <- function(A1bar,A2bar,d,
   Dhat <- A1bar[-mrow,-mcol] - A2bar[-mrow,-mcol]
   # estimate T
   That <- Chat %*% Tpinv(Dhat,d) %*% Rhat
-  # esimate subspaces
+  # estimate subspaces
   temp <- irlba::irlba(That,d)
-  Lproj <- temp$u
-  Rproj <- temp$v
+  # store left and right-hand side projections
+  if(!directed){
+    Lproj <- Rproj <- temp$u
+  }
+  else{
+    Lproj <- temp$u
+    Rproj <- temp$v
+  }
   return(list(Lproj=Lproj,Rproj=Rproj))
 }
 
@@ -58,7 +86,8 @@ Subspace_onestep <- function(A1bar,A2bar,d,
 Subspace_impute <- function(A1bar,A2bar,d,
                             hyp_indices,
                             masked_indices,
-                            self_loops){
+                            self_loops,
+                            directed){
   uindices <- rbind(hyp_indices,masked_indices)
   # estimate blocks
   Adiff <- A1bar - A2bar
@@ -68,9 +97,14 @@ Subspace_impute <- function(A1bar,A2bar,d,
   Adiff[uindices] <- NA
   # esimate subspaces
   impdiff <- softImpute::softImpute(Adiff,rank.max=d,lambda=0,type='svd')
-  # now returns full input, orthonormality enforced later
-  Lproj <- impdiff$u
-  Rproj <- impdiff$v
+  # store left and right-hand side projections
+  if(!directed){
+    Lproj <- Rproj <- impdiff$u
+  }
+  else{
+    Lproj <- impdiff$u
+    Rproj <- impdiff$v
+  }
   return(list(Lproj=Lproj,Rproj=Rproj))
 }
 
@@ -80,23 +114,39 @@ Subspace_impute <- function(A1bar,A2bar,d,
 Binary_meso <- function(A,B,
                         hyp_indices,
                         hyp_proj,
-                        var_type){
+                        var_type,
+                        directed){
   # left/right objects
   Lproj <- hyp_proj$Lproj
   Rproj <- hyp_proj$Rproj
   # dimensions
-  ss <- nrow(hyp_indices)
   m <- length(A)
   n <- nrow(A[[1]])
   # reset tilde if m is 1
   if(m==1){
     var_type <- 'basic'
   }
-  dd <- ncol(Lproj)*ncol(Rproj)
-  # orthonormal basis
+  # hypothesis set entries as a matrix
   s_ind <- matrix(FALSE,n,n)
   s_ind[hyp_indices] <- TRUE
-  UV <- (Rproj %x% Lproj)[c(s_ind),]
+  # 'basic' design
+  if(!directed){
+    # index matrix for collecting hypothesis set from data
+    s_ind_data <- s_ind & upper.tri(s_ind,diag=TRUE)
+    # linear mapping and projection basis
+    Gd <- Sym_span(s_ind,s_ind_data)
+    UV <- pracma::orth(crossprod(Gd,(Rproj %x% Lproj)[c(s_ind),]))
+    # need orth to remove possible rank deficiency
+  }
+  else{
+    # index matrix for collecting hypothesis set from data
+    s_ind_data <- s_ind
+    # projection basis
+    UV <- (Rproj %x% Lproj)[c(s_ind),]
+  }
+  # dimensions
+  ss <- nrow(UV)
+  dd <- ncol(UV)
   # common subspace
   X <- rbind(UV,UV)
   # difference subspace
@@ -104,10 +154,7 @@ Binary_meso <- function(A,B,
   # final design
   Xall <- cbind(X,W)
   # populate full successes
-  s_vec <- rep(0,2*ss)
-  for(kk in 1:m){
-    s_vec <- s_vec + c(A[[kk]][hyp_indices],B[[kk]][hyp_indices])
-  }
+  s_vec <- rowSums(sapply(1:m,function(kk){c(A[[kk]][s_ind_data],B[[kk]][s_ind_data])}))
   # calculate failures
   f_vec <- m - s_vec
   # fit logistic regression
@@ -154,26 +201,36 @@ Binary_meso <- function(A,B,
 Weight_meso <- function(A,B,
                         hyp_indices,
                         hyp_proj,
-                        var_type){
+                        var_type,
+                        directed){
+  # dimensions
+  m <- length(A)
+  n <- nrow(A[[1]])
   # left/right objects
   Lproj <- hyp_proj$Lproj
   Rproj <- hyp_proj$Rproj
-  # dimensions
-  ss <- nrow(hyp_indices)
-  m <- length(A)
-  n <- nrow(A[[1]])
-  # augmented data approach
-  dd <- ncol(Lproj)*ncol(Rproj)
-  # orthonormal basis
+  # hypothesis set indices as a matrix
   s_ind <- matrix(FALSE,n,n)
   s_ind[hyp_indices] <- TRUE
-  UV <- svd((Rproj %x% Lproj)[c(s_ind),])$u
-  # test
-  X <- Y <- matrix(NA,m,dd)
-  for(kk in 1:m){
-    X[kk,] <- c(crossprod(UV, c(A[[kk]][hyp_indices])))
-    Y[kk,] <- c(crossprod(UV, c(B[[kk]][hyp_indices]))) ### can rewrite this with sapply
+  # projection matrix, accounting for symmetry
+  if(!directed){
+    # index matrix for collecting hypothesis set from data
+    s_ind_data <- s_ind & upper.tri(s_ind,diag=TRUE)
+    # linear mapping and projection basis
+    Gd <- Sym_span(s_ind,s_ind_data)
+    UV <- pracma::orth(crossprod(Gd,(Rproj %x% Lproj)[c(s_ind),]))
   }
+  else{
+    # index matrix for collecting hypothesis set from data
+    s_ind_data <- s_ind
+    # projection basis
+    UV <- pracma::orth((Rproj %x% Lproj)[c(s_ind),])
+  }
+  ss <- nrow(UV)
+  dd <- ncol(UV)
+  # test
+  X <- t(sapply(1:m,function(kk){c(crossprod(UV, A[[kk]][s_ind_data]))}))
+  Y <- t(sapply(1:m,function(kk){c(crossprod(UV, B[[kk]][s_ind_data]))}))
   # basic F test on augmented data assuming equal variance, independence
   # sse values
   sse_null <- sum((scale(rbind(X,Y),scale=F))^2)
@@ -197,20 +254,21 @@ Weight_meso <- function(A,B,
   return(out)
 }
 
-Mesoscale_test <- function(A,B,sig,
+Mesoscale_test <- function(A,B,
+                           sig,
                            hyp_set, # a rectangle (list of {row,col}), a 2-column matrix of entries, or a list if rectangles
                            edge_type='weighted',# or binary
                            # other options
                            dimension,
-                           # symmetric = FALSE ## TODO
-                           self_loops = TRUE # overrides diagonal entries in the hyp_set, masks them in the imputation routine
+                           directed = TRUE,
+                           self_loops = TRUE, # overrides diagonal entries in the hyp_set, masks them in the imputation routine
                            proj_type='impute',# or onestep
                            var_type='basic', # or 'quasi'
                            masked_set=list(NULL,NULL) # a rectangle (list of {row,col}), a 2-column matrix of entries, or a list if rectangles
 ){
   # parameter checking
   # ...
-  # does the test set specify a rectangle
+  # does the test set specify a rectangle, if so expand to general indices
   if(is.matrix(hyp_set)){
     hyp_indices <- hyp_set
   }
@@ -222,8 +280,7 @@ Mesoscale_test <- function(A,B,sig,
       hyp_indices <- as.matrix(expand.grid(hyp_set))
     }
   }
-
-  # does the masked set specify a rectangle
+  # does the masked set specify a rectangle, if so expand to general indices
   if(!is.null(masked_set)){
     if(is.matrix(masked_set)){
       masked_indices <- masked_set
@@ -243,16 +300,22 @@ Mesoscale_test <- function(A,B,sig,
   else{
     masked_indices <- NULL
   }
-
-  # account for self loops
+  # account for self loops in masked set and hypothesis set
   if(!self_loops){
-    hyp_sl <- test_indices[,1]==test_indices[,2]
+    hyp_sl <- hyp_indices[,1]==hyp_indices[,2]
     if(sum(hyp_sl) > 0){
-      masked_indices <- rbind(masked_indices,test_indices[hyp_sl,])
-      test_indices <- test_indices[!hyp_sl,]
+      masked_indices <- rbind(masked_indices,hyp_indices[hyp_sl,])
+      hyp_indices <- hyp_indices[!hyp_sl,]
     }
   }
-
+  # account for symmetry in masked set and hypothesis set
+  if(!directed){
+    # augment hypothesis indices and masked indices to include diagonal mirrors
+    hyp_indices <- unique(rbind(hyp_indices,hyp_indices[,c(2,1)]))
+    if(!is.null(masked_indices)){
+      masked_indices <- unique(rbind(masked_indices,masked_indices[,c(2,1)]))
+    }
+  }
   # dimensions
   m <- length(A)
   n <- nrow(A[[1]])
@@ -269,25 +332,33 @@ Mesoscale_test <- function(A,B,sig,
   if(proj_type=='impute'){
     hyp_proj <- Subspace_impute(Abar,Bbar,
                                 dimension,
-                                hyp_indices,masked_indices,
-                                self_loops)
+                                hyp_indices,
+                                masked_indices,
+                                self_loops,
+                                directed)
   }
   else{
     hyp_proj <- Subspace_onestep(Abar,Bbar,
                                  dimension,
-                                 hyp_indices,masked_indices,
-                                 self_loops)
+                                 hyp_indices,
+                                 masked_indices,
+                                 self_loops,
+                                 directed)
   }
   # test procedures
   if(edge_type=='weighted'){
     test_out <- Weight_meso(A,B,
-                            hyp_indices,hyp_proj,
-                            var_type)
+                            hyp_indices,
+                            hyp_proj,
+                            var_type,
+                            directed)
   }
   else{
     test_out <- Binary_meso(A,B,
-                            hyp_indices,hyp_proj,
-                            var_type)
+                            hyp_indices,
+                            hyp_proj,
+                            var_type,
+                            directed)
   }
   # returns acceptance/rejection decision and a pvalue
   return(c(as.integer(test_out$pval <= sig),test_out$pval))
