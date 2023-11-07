@@ -237,8 +237,8 @@ Weight_meso <- function(A,B,
   sse_alt <- sum((scale(X,scale=F))^2) + sum((scale(Y,scale=F))^2)
   # adjustment for tilde
   if(var_type=='quasi'){
-    Xa <- (diag(ss) - tcrossprod(UV)) %*% sapply(A,function(x){x[hyp_indices]})
-    Ya <- (diag(ss) - tcrossprod(UV)) %*% sapply(B,function(x){x[hyp_indices]})
+    Xa <- (diag(ss) - tcrossprod(UV)) %*% sapply(A,function(x){x[s_ind_data]})
+    Ya <- (diag(ss) - tcrossprod(UV)) %*% sapply(B,function(x){x[s_ind_data]})
     sse_alt_den <- sum(Xa^2) + sum(Ya^2)
     df_den <- 2*m*(ss - dd)
   }
