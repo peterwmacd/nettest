@@ -44,12 +44,15 @@ simu = twosamp_twoblock(n = 6,
                         epsilon = 0.7
                           )
 #Boot_ASE_computeStat(simu$A_G, simu$A_H, 4)
-LowRankTests(simu$A_G, simu$A_H, 4, 0.05, 20)
+# LowRankTests(simu$A_G, simu$A_H, 4, 0.05, 20)
 ```
 
 ```{r}
 Asymp_TW(simu$A_G, simu$A_H, 0.05, 3)
 spectral_clus(simu$A_G, simu$A_H, 2)
+
+
+
 ```
 
 
@@ -63,18 +66,6 @@ simu_m1 = twosamp_twoblock(n = 8,
                           )
 Boot_ASE_computeStat(simu_m1$A_G, simu_m1$A_G, 8)
 ```
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -94,39 +85,98 @@ simu$A_G
 simu$A_H
 ```
 
+
+
 ```{r}
-Reduce("+", simu$A_G) / length(simu$A_G) - Reduce("+", simu$A_H) / length(simu$A_H)
+Asymp_third_power(simu$A_G, simu$A_H, 0.05)
 ```
 
 
+
+est.LG(A,K=2)
 ```{r}
-m1 = length(simu$A_G) # m1
-m2 = length(simu$A_H) # m2
+A = simu$A_G
+B = simu$A_H
+r = 3
+pmetric_method = "LG"
+
+
+
+```
+
+-----
+```{r}
 a = Reduce("+", simu$A_G) / length(simu$A_G)
 b = Reduce("+", simu$A_H) / length(simu$A_H)
-n = nrow(a) # nrow(Auij) should be = nrow(Buij)
-  
-d = (a - b) / sqrt(n * ((a) * (1 - a) / m1 + b * (1 - b) / m2))
-d
-```
-
-```{r}
-c = matrix(0, num_n, num_n)
-  # Fill the diagonal with -1/√n and 1/√n with equal probability
-  for (i in 1:num_n) {
-    if (runif(1) < 0.5) {
-      c[i, i] = -1/sqrt(n)
-    } else {
-      c[i, i] = 1/sqrt(n)
+idx = spectral_clus(list(a), list(b), 2)
+Zij = matrix(0, 4, 4)
+for (i in 1:2){
+  for (j in 1:2) {
+    if (i != j){
+      curr_a = a[idx == i, idx == j]
+      curr_b = b[idx == i, idx == j]
+      # Pij = mean(curr)
+      # 
+      # curr = B[[1]][idx == i, idx == j]
+      # Qij = mean(curr)
+#在分母的计算上，用 mean（curra）
+      numer = mean(curr_a) - mean(curr_b) # {A_bar}1, ij - {A_bar}2, ij
+      denom = sqrt(4 * ((curr_a) * (1 - curr_a) / 3 + curr_b * (1 - curr_b) / 3))
+      nondiag_z = numer / denom
+      Zij[idx == i, idx == j] = nondiag_z
+    }
+    
+    else{
+      # curr = A[[1]][idx == i, idx == j]
+      # Pij = sum(curr) / (dim(curr)[1] * (dim(curr)[1] - 1)) # Pij might = x / 0
+      # 
+      # curr = B[[1]][idx == i, idx == j]
+      # Qij = sum(curr) / (dim(curr)[1] * (dim(curr)[1] - 1))
+      Bij = matrix(0, 4, 4)
+      for (k in 1:4) {
+        if (runif(1) < 0.5) {
+          Bij[k, k] = -1/sqrt(4)
+        } else {
+          Bij[k, k] = 1/sqrt(4)
+        }
+      }
+      # diag(Zij[idx == i, idx == j]) = diag(Bij)
+      curr_bij = Bij[idx == i, idx == j]
+      Zij[idx == i, idx == j] = curr_bij
+      
     }
   }
+}
+```
 
-diag(c)
+
+
+
+```{r}
+# m1 = length(simu$A_G) # m1
+# m2 = length(simu$A_H) # m2
+# a = Reduce("+", simu$A_G) / length(simu$A_G)
+# b = Reduce("+", simu$A_H) / length(simu$A_H)
+# n = nrow(a) # nrow(Auij) should be = nrow(Buij)
+#   
+# d = (a - b) / sqrt(n * ((a) * (1 - a) / m1 + b * (1 - b) / m2))
+# d
 ```
 
 ```{r}
-diag(d) = diag(c)
+# c = matrix(0, num_n, num_n)
+#   # Fill the diagonal with -1/√n and 1/√n with equal probability
+#   for (i in 1:num_n) {
+#     if (runif(1) < 0.5) {
+#       c[i, i] = -1/sqrt(n)
+#     } else {
+#       c[i, i] = 1/sqrt(n)
+#     }
+#   }
+
+# diag(c)
 ```
+
 
 ```{r}
 sum(diag(b %*% b%*%b)) / sqrt(15)
