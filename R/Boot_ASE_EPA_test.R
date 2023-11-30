@@ -249,3 +249,53 @@ Boot_ASE_computeStat <- function(A_set, B_set, r) {
     stop("not list")
   }
 }
+
+
+
+genSparseGraph <- function(m, model) {
+  # m: the number of graphs
+  A <- list()
+  for (i in 1:m) {
+    switch(model$name,
+           ER = {
+             # A1 <- triu(ceiling(sprand(model$n, model$n, model$p)), 1)
+             A1 <- trui(matrix(rbinom(model$n^2, 1, model$p), model$n, model$n))
+             A[[i]] <- A1 + t(A1)
+           },
+           `2SBM` = {
+             n1 <- floor(model$n/2)
+             n2 <- model$n - n1
+             A11 <- trui(matrix(rbinom(n1^2, 1, model$p), n1, n1))
+             A22 <- trui(matrix(rbinom(n2^2, 1, model$p), n2, n2))
+             A12 <- matrix(rbinom(n1*n2, 1, model$p), n1, n2)
+             A1 <- rbind(cbind(A11, A12), cbind(matrix(0, n2, n1), A22))
+             A[[i]] <- A1 + t(A1)
+           },
+           SBM = {
+             inc <- floor(model$n / model$k)
+             A1 <- matrix(0, nrow = model$n, ncol = model$n)
+             ni <- 0
+             for (ci in 1:model$k) {
+               nj <- ni
+               A1[(ni + 1):(ni + inc), (nj + 1):(nj + inc)] <- trui(matrix(rbinom(inc^2, 1, model$p), inc, inc))
+               for (cj in (ci + 1):model$k) {
+                 nj <- nj + inc
+                 A1[(ni + 1):(ni + inc), (
+                   nj + 1):(nj + inc)] <- trui(matrix(rbinom(inc^2, 1, model$q), inc, inc))
+               }
+               ni <- ni + inc
+             }
+             A[[i]] <- A1 + t(A1)
+           },
+           IER = {
+             EA <- trui(model$P)
+             n = model$n
+             A1 <- matrix(runif(n*n) < EA, n, n)*1
+             A[[i]] <- A1 + t(A1)
+           },
+           {
+             stop("Model name unavailable.")
+           })
+  }
+  A
+}
