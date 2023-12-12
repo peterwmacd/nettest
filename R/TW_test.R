@@ -41,13 +41,15 @@ library(RMTstat)
 #'
 Asymp_TW <- function(A, B, sig, r) {
   n = dim(A[[1]])[1]
+
   if (length(r)==1){
-    idx = spectral_clus(A,B,r);
+    idx = spectral_clus(A, B,r);
   }
   else{
     idx = r
     r = max(idx) #k
   }
+
   #compute C
   C = A[[1]] - B[[1]]
 

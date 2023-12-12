@@ -1,6 +1,6 @@
 library(Matrix)
 library(irlba)
-
+library(abind)
 
 # Boot-ASE/EPA Test -------------------------------------------------------
 
@@ -56,7 +56,7 @@ library(irlba)
 LowRankTests <- function(A, B, r, sig, bs) {
 
   # compute the test statistic
-  testStat <- Boot_ASE_computeStat(A[[1]], B[[1]], r)
+  testStat <- Boot_ASE_computeStat(A, B, r)
   # bootstrap
   bsStat <- matrix(0, nrow = bs, ncol = 2)
 
@@ -136,36 +136,166 @@ LowRankTests <- function(A, B, r, sig, bs) {
 #' Boot_ASE_computeStat(simu$A_G[[1]], simu$A_H[[1]], 100)
 #'
 #'
-Boot_ASE_computeStat <- function(A1, B1, r) {
-  # svd of A1
-  u1svd <- svd(as.matrix(A1))
-  u1 <- u1svd$u[,1:r]
-  s1 <- diag(u1svd$d[1:r])
-  v1 <- u1svd$v[,1:r]
+# Boot_ASE_computeStat <- function(A1, B1, r) {
+  # # svd of A1
+  # u1svd <- svd(as.matrix(A1))
+  # u1 <- u1svd$u[,1:r]
+  # s1 <- diag(u1svd$d[1:r])
+  # v1 <- u1svd$v[,1:r]
+  #
+  # # svd of B1
+  # u2svd <- svd(as.matrix(B1))
+  # u2 <- u2svd$u[,1:r]
+  # s2 <- diag(u2svd$d[1:r])
+  # v2 <- u2svd$v[,1:r]
+  #
+  # X <- u1 %*% sqrt(s1)
+  # Y <- u2 %*% sqrt(s2)
+  #
+  # # compute W
+  # uvSVD <- svd(t(X) %*% Y)
+  # W <- uvSVD$u %*% uvSVD$v
+  # stats <- numeric(2)
+  #
+  # # ASE statistic
+  # # min_W||X-YW||_F solved using orthogonal Procrustes problem, whose solution
+  # # is Wopt = UV' where X'Y = USV'
+  # stats[1] <- norm(X - Y %*% W, type = "F")
+  #
+  # # EPA statistic (difference of estimated population EPAacencies)
+  # stats[2] <- norm(u1 %*% s1 %*% t(v1) - u2 %*% s2 %*% t(v2), type = "F")
+  # return(stats)
+# }
 
-  # svd of B1
-  u2svd <- svd(as.matrix(B1))
-  u2 <- u2svd$u[,1:r]
-  s2 <- diag(u2svd$d[1:r])
-  v2 <- u2svd$v[,1:r]
 
-  X <- u1 %*% sqrt(s1)
-  Y <- u2 %*% sqrt(s2)
 
-  # compute W
-  uvSVD <- svd(t(X) %*% Y)
-  W <- uvSVD$u %*% uvSVD$v
-  stats <- numeric(2)
+# consider m = 1 and m >1
+Boot_ASE_computeStat <- function(A_set, B_set, r) {
 
-  # ASE statistic
-  # min_W||X-YW||_F solved using orthogonal Procrustes problem, whose solution
-  # is Wopt = UV' where X'Y = USV'
-  stats[1] <- norm(X - Y %*% W, type = "F")
 
-  # EPA statistic (difference of estimated population EPAacencies)
-  stats[2] <- norm(u1 %*% s1 %*% t(v1) - u2 %*% s2 %*% t(v2), type = "F")
-  return(stats)
+  if (length(A_set) > 1){
+    print("input m > 1")
+    # Calculate the element-wise average
+    A_average_matrix <- matrix(0, nrow = nrow(A_set[[1]]), ncol = ncol(A_set[[1]]))
+    B_average_matrix <- matrix(0, nrow = nrow(B_set[[1]]), ncol = ncol(B_set[[1]]))
+    for (i in 1:length(A_set)) {
+      A_average_matrix <- A_average_matrix + A_set[[i]]
+      B_average_matrix <- B_average_matrix + B_set[[i]]
+    }
+    A1 <- A_average_matrix / length(A_set)
+    B1 <- B_average_matrix / length(B_set)
+
+    u1svd <- svd(A1)
+    u1 <- u1svd$u[, 1:r]
+    s1 <- diag(u1svd$d[1:r])
+    v1 <- u1svd$v[, 1:r]
+
+    # svd of B1
+    u2svd <- svd(B1)
+    u2 <- u2svd$u[, 1:r]
+    s2 <- diag(u2svd$d[1:r])
+    v2 <- u2svd$v[, 1:r]
+
+    X <- u1 %*% sqrt(s1)
+    Y <- u2 %*% sqrt(s2)
+
+    # compute W
+    uvSVD <- svd(t(X) %*% Y)
+    W <- uvSVD$u %*% uvSVD$v
+    stats <- numeric(2)
+
+    # ASE statistic
+    stats[1] <- norm(X - Y %*% W, type = "F")
+
+    # EPA statistic (difference of estimated population EPAacencies)
+    stats[2] <- norm(u1 %*% s1 %*% t(v1) - u2 %*% s2 %*% t(v2), type = "F")
+    return(stats)
+
+  } else if (length(A_set) == 1){
+    print("input m = 1")
+    A1 = A_set[[1]]
+    B1 = B_set[[1]]
+    # svd of A1
+    u1svd <- svd(as.matrix(A1))
+
+    u1 <- u1svd$u[,1:r]
+    s1 <- diag(u1svd$d[1:r])
+    v1 <- u1svd$v[,1:r]
+
+    # svd of B1
+    u2svd <- svd(as.matrix(B1))
+    u2 <- u2svd$u[,1:r]
+    s2 <- diag(u2svd$d[1:r])
+    v2 <- u2svd$v[,1:r]
+
+    X <- u1 %*% sqrt(s1)
+    Y <- u2 %*% sqrt(s2)
+
+    # compute W
+    uvSVD <- svd(t(X) %*% Y)
+    W <- uvSVD$u %*% uvSVD$v
+    stats <- numeric(2)
+
+    # ASE statistic
+    # min_W||X-YW||_F solved using orthogonal Procrustes problem, whose solution
+    # is Wopt = UV' where X'Y = USV'
+    stats[1] <- norm(X - Y %*% W, type = "F")
+
+    # EPA statistic (difference of estimated population EPAacencies)
+    stats[2] <- norm(u1 %*% s1 %*% t(v1) - u2 %*% s2 %*% t(v2), type = "F")
+    return(stats)
+  }
+  else {
+    stop("not list")
+  }
 }
 
 
 
+genSparseGraph <- function(m, model) {
+  # m: the number of graphs
+  A <- list()
+  for (i in 1:m) {
+    switch(model$name,
+           ER = {
+             # A1 <- triu(ceiling(sprand(model$n, model$n, model$p)), 1)
+             A1 <- trui(matrix(rbinom(model$n^2, 1, model$p), model$n, model$n))
+             A[[i]] <- A1 + t(A1)
+           },
+           `2SBM` = {
+             n1 <- floor(model$n/2)
+             n2 <- model$n - n1
+             A11 <- trui(matrix(rbinom(n1^2, 1, model$p), n1, n1))
+             A22 <- trui(matrix(rbinom(n2^2, 1, model$p), n2, n2))
+             A12 <- matrix(rbinom(n1*n2, 1, model$p), n1, n2)
+             A1 <- rbind(cbind(A11, A12), cbind(matrix(0, n2, n1), A22))
+             A[[i]] <- A1 + t(A1)
+           },
+           SBM = {
+             inc <- floor(model$n / model$k)
+             A1 <- matrix(0, nrow = model$n, ncol = model$n)
+             ni <- 0
+             for (ci in 1:model$k) {
+               nj <- ni
+               A1[(ni + 1):(ni + inc), (nj + 1):(nj + inc)] <- trui(matrix(rbinom(inc^2, 1, model$p), inc, inc))
+               for (cj in (ci + 1):model$k) {
+                 nj <- nj + inc
+                 A1[(ni + 1):(ni + inc), (
+                   nj + 1):(nj + inc)] <- trui(matrix(rbinom(inc^2, 1, model$q), inc, inc))
+               }
+               ni <- ni + inc
+             }
+             A[[i]] <- A1 + t(A1)
+           },
+           IER = {
+             EA <- trui(model$P)
+             n = model$n
+             A1 <- matrix(runif(n*n) < EA, n, n)*1
+             A[[i]] <- A1 + t(A1)
+           },
+           {
+             stop("Model name unavailable.")
+           })
+  }
+  A
+}
