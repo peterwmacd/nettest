@@ -23,7 +23,8 @@ The Asymp-Chi2 test involves computing a test statistic T_chi2 (which is a sum o
 The test involves computing rejection decision and the p-value, which is the probability that the null hypothesis (i.e., both graphs have the same population adjacency) is true.
 }
 \examples{
-simu = twosamp_twoblock(n = 4, m = 4, p = 0.3, q = 0.3, epsilon = 0.7)
-test_result = Asymp_chi2(simu$A_G, simu$A_H, 0.05)
+A <- genSparseGraph(4,model=list(name='2SBM',n=4,p=0.3,q=0.3))
+B <- genSparseGraph(4,model=list(name='2SBM',n=4,p=1,q=0.3))
+test_result = Asymp_chi2(A, B, 0.05)
 
 }

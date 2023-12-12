@@ -1,7 +1,3 @@
-library(Matrix)
-library(irlba)
-
-
 # Boot-Spectral Test ------------------------------------------------------
 
 # Permutation based bootstrapped variants of tests in arxiv 1707.00833 (Boot-Frobenius and Boot-Spectral)
@@ -47,8 +43,8 @@ library(irlba)
 #' @export
 #'
 #' @examples
-#' A <- genSparseGraph(1, model1) # sample size, m=1
-#' B <- genSparseGraph(1, model2)
+#' A <- genSparseGraph(4, model=list(name='ER',n=10,p=.1))
+#' B <- genSparseGraph(4, model=list(name='ER',n=10,p=.5))
 #' test_result = ShufflingTests(A, B, 0.05, 200)
 #'
 ShufflingTests <- function(A, B, sig, bs) {
@@ -94,10 +90,9 @@ ShufflingTests <- function(A, B, sig, bs) {
 #' @export
 #'
 #' @examples
-#' A <- genSparseGraph(1, model1) # sample size, m=1
-#' B <- genSparseGraph(1, model2)
-#' m <- min(length(A), length(B))
-#' testStat <- Boot_Spectral_computeStat(A[1:m], B[1:m])
+#' A <- genSparseGraph(4, model=list(name='ER',n=10,p=.1))
+#' B <- genSparseGraph(4, model=list(name='ER',n=10,p=.5))
+#' testStat <- Boot_Spectral_computeStat(A, B)
 #'
 #'
 #'
@@ -117,8 +112,8 @@ Boot_Spectral_computeStat <- function(A1, B1) {
     SB2 <- SB2 + B1[[i+m1]]
   }
 
-  nummat <- triu(SA1 - SB1) * triu(SA2 - SB2)
-  denmat <- triu(SA1 + SB1) * triu(SA2 + SB2)
+  nummat <- pracma::triu(SA1 - SB1) * pracma::triu(SA2 - SB2)
+  denmat <- pracma::triu(SA1 + SB1) * pracma::triu(SA2 + SB2)
   Stat_Op = sum(nummat) / sqrt(sum(denmat))
   Stat_Fro = svd(SA1 + SA2 - SB1 - SB2)$d[1]/sqrt(norm(SA1 + SA2 + SB1 + SB2, type = "i"))
   return(c(Stat_Fro, Stat_Op))

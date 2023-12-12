@@ -1,7 +1,3 @@
-library(Matrix)
-library(irlba)
-library(RMTstat)
-
 # TW Test -----------------------------------------------------------------
 
 # Returns:
@@ -36,19 +32,15 @@ library(RMTstat)
 #' @export
 #'
 #' @examples
-#' simu = twosamp_twoblock(n = 4, m = 4, p = 0.3, q = 0.3, epsilon = 0.7)
-#' test_result = Asymp_TW(simu$A_G, simu$A_H, 0.05, 100)
+#' A <- genSparseGraph(1,model=list(name='2SBM',n=4,p=0.3,q=0.3))
+#' B <- genSparseGraph(1,model=list(name='2SBM',n=4,p=1,q=0.3))
+#' test_result = Asymp_TW(A, B, 0.05, 2)
 #'
 Asymp_TW <- function(A, B, sig, r) {
   n = dim(A[[1]])[1]
 
-  if (length(r)==1){
-    idx = spectral_clus(A, B,r);
-  }
-  else{
-    idx = r
-    r = max(idx) #k
-  }
+  # spectral clustering
+  idx = spectral_clus((A[[1]]+B[[1]])/2,r);
 
   #compute C
   C = A[[1]] - B[[1]]
@@ -85,55 +77,11 @@ Asymp_TW <- function(A, B, sig, r) {
   # NA check
   C[is.na(C)] = 0
   #test statistics
-  spectral.norm = irlba(C, 1)$d # the largest singular value
+  spectral.norm = irlba::irlba(C, 1)$d # the largest singular value
   test.stat = n ^ (2 / 3) * (spectral.norm - 2)
-  p.val = ptw(test.stat, beta=1, lower.tail = FALSE, log.p = FALSE)
+  p.val = RMTstat::ptw(test.stat, beta=1, lower.tail = FALSE, log.p = FALSE)
   test <- ifelse(p.val <= sig, 1, 0)
 
   return(c(test, p.val))
-}
-
-
-# Auxiliary functions
-
-# Spectral Clustering used in TW test -------------------------------------
-
-# Example: # clusters <- spectral_clus(simu$A_G, simu$A_H, r = 3)
-
-#' spectral_clus
-#'
-#'
-#' This function computes the cluster assignment of each node, serving as an auxiliary functions for the function: Asymp_TW
-#'
-#'
-#'
-#'
-#' @param A a sparse EPAacency matrix
-#' @param B a sparse EPAacency matrix
-#' @param r r communities in G
-#'
-#' @return returns a vector of length n containing the cluster assignment of each node.
-#' @export
-#'
-#' @examples
-#' spectral_clus(simu$A_G, simu$A_H, r = 3)
-spectral_clus = function(A, B, r){
-  C = (A[[1]] + B[[1]])/2
-  d = rowSums(C)
-  d[d==0] = 1
-  d = 1/sqrt(d)
-  C = C * (d %*% t(d))
-  vec = svd(C)$v[, 1:r]
-  normv = sqrt(rowSums(vec^2))
-  normv[normv==0] = 1
-
-  a = matrix(normv, nrow=1, ncol=r, byrow=TRUE)
-  output = vec
-
-  for(i in 1:nrow(vec)){
-    output[i, ] = vec[i, ] / a
-  }
-  idx = kmeans(output, centers=r)$cluster
-  return(idx)
 }
 

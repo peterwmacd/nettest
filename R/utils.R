@@ -1,0 +1,219 @@
+# Utility functions for nettest
+
+#### spectral clustering ####
+
+# Spectral Clustering used in TW test -------------------------------------
+
+# Example: # clusters <- spectral_clus(simu$A_G, simu$A_H, r = 3)
+
+#' spectral_clus
+#'
+#'
+#' This function computes the cluster assignment of each node, serving as an auxiliary functions for the function: Asymp_TW
+#'
+#'
+#'
+#'
+#' @param C a matrix
+#' @param r r communities in G
+#'
+#' @return returns a vector of length n containing the cluster assignment of each node.
+#' @export
+#'
+#' @examples
+#' C = tcrossprod(1:10)
+#' spectral_clus(C, r = 3)
+spectral_clus = function(C, r){
+  d = rowSums(C)
+  d[d==0] = 1
+  d = 1/sqrt(d)
+  C = C * (d %*% t(d))
+  vec = svd(C)$v[, 1:r]
+  normv = sqrt(rowSums(vec^2))
+  normv[normv==0] = 1
+
+  a = matrix(rep(normv,r), ncol=r)
+  output = vec/a
+
+  idx = stats::kmeans(output, centers=r)$cluster
+  return(idx)
+}
+
+# populating a matrix with its block averages
+block_avg <- function(M,c){
+  Mbar <- matrix(0,nrow(M),ncol(M))
+  r <- max(c)
+  apply(expand.grid(1:r,1:r),1,function(s){
+    ix <- which(c==s[1])
+    iy <- which(c==s[2])
+    Mbar[ix,iy] <<- mean(M[ix,iy])
+  })
+  return(Mbar)
+}
+
+#### mesoscale testing ####
+
+# logit function
+Logit <- function(x){
+  log((x/(1-x)))
+}
+
+# expit function
+expit <- function(x){
+  1/(1+exp(-x))
+}
+
+# logistic regression variance function
+vexpit <- function(x){
+  expit(x)*(1-expit(x))
+}
+
+# rank-truncated psuedoinverse
+Tpinv <- function(M,r){
+  temp <- irlba::irlba(M,r)
+  dinv <- 1/temp$d
+  out <- t(temp$u %*% (dinv * t(temp$v)))
+  return(out)
+}
+
+# calculate the pseudoinverse matrix for enforcing symmetry constraints
+Sym_span <- function(s_ind,s_ind_tri){
+  # reordered hypothesis set and upper triangle
+  ind <- which(s_ind,arr.ind=TRUE)
+  ind_tri <- which(s_ind_tri,arr.ind=TRUE)
+  # G dimensions
+  n_ind <- nrow(ind)
+  n_ind_tri <- nrow(ind_tri)
+  # construct G matrix
+  G <- matrix(0,n_ind,n_ind_tri)
+  for(kk in 1:n_ind){
+    entry <- ind[kk,]
+    tri_index <- which(((entry[1] == ind_tri[,1]) & (entry[2] == ind_tri[,2])) | ((entry[1] == ind_tri[,2]) & (entry[2] == ind_tri[,1])))
+    G[kk,tri_index] <- 1
+  }
+  # (left) pseudoinverse
+  Gd <- t(t(G)/colSums(G))
+  return(Gd)
+}
+
+# onestep projection estimator
+# takes the data, dimension, hyp_indices, masked_indices (default empty)
+# returns left and righthand side o/n bases
+Subspace_onestep <- function(A1bar,A2bar,d,
+                             hyp_indices,
+                             masked_indices,
+                             self_loops,
+                             directed){
+  # if no self loops, check for diagonal NAs and replace with 0's
+  if(!self_loops & any(is.na(c(diag(A1bar),diag(A2bar))))){
+    diag(A1bar) <- 0
+    diag(A2bar) <- 0
+  }
+  # dimension
+  n <- nrow(A1bar)
+  # compute masked rows/columns
+  s_ind <- matrix(0,n,n)
+  s_ind[rbind(hyp_indices,masked_indices)] <- 1
+  mrow <- which(rowSums(s_ind)>0)
+  mcol <- which(colSums(s_ind)>0)
+  # estimate blocks
+  Chat <- A1bar[,-mcol] - A2bar[,-mcol]
+  Rhat <- A1bar[-mrow,] - A2bar[-mrow,]
+  Dhat <- A1bar[-mrow,-mcol] - A2bar[-mrow,-mcol]
+  # estimate T
+  That <- Chat %*% Tpinv(Dhat,d) %*% Rhat
+  # estimate subspaces
+  temp <- irlba::irlba(That,d)
+  # store left and right-hand side projections
+  if(!directed){
+    Lproj <- Rproj <- temp$u
+  }
+  else{
+    Lproj <- temp$u
+    Rproj <- temp$v
+  }
+  return(list(Lproj=Lproj,Rproj=Rproj))
+}
+
+# projection estimates with hard imputation
+# takes the data, dimension, hyp_indices, masked_indices (default empty)
+# returns left and righthand side o/n bases
+Subspace_impute <- function(A1bar,A2bar,d,
+                            hyp_indices,
+                            masked_indices,
+                            self_loops,
+                            directed){
+  uindices <- rbind(hyp_indices,masked_indices)
+  # estimate blocks
+  Adiff <- A1bar - A2bar
+  if(!self_loops){
+    diag(Adiff) <- NA
+  }
+  Adiff[uindices] <- NA
+  # esimate subspaces
+  impdiff <- softImpute::softImpute(Adiff,rank.max=d,lambda=0,type='svd')
+  # store left and right-hand side projections
+  if(!directed){
+    Lproj <- Rproj <- impdiff$u
+  }
+  else{
+    Lproj <- impdiff$u
+    Rproj <- impdiff$v
+  }
+  return(list(Lproj=Lproj,Rproj=Rproj))
+}
+
+#### OMNI test ####
+
+# genIERGraph <- function(m, model) {
+#   A <- list()
+#   for (i in 1:m) {
+#     EA <- upper.tri(model$P)
+#     A1 <- matrix(runif(length(EA)) < EA, nrow = ncol(model$P))
+#     A1 <- A1 + t(A1)  # Ensure symmetry by adding the transpose
+#     A[[i]] <- A1
+#   }
+#   return(A)
+# }
+
+get_omnibus_matrix_sparse <- function(matrices) {
+  rows <- list()
+
+  # Iterate over each column
+  for (column_index in seq_along(matrices)) {
+    current_row <- list()
+
+    for (row_index in seq_along(matrices)) {
+      if (row_index == column_index) {
+        # we are on the diagonal, we do not need to perform any calculation and instead add the current matrix
+        # to the current_row
+        current_row[[row_index]] <- matrices[[column_index]]
+      } else {
+        # otherwise we are not on the diagonal and we average the current_matrix with the matrix at row_index
+        # and add that to our current_row
+        matrices_averaged <- (matrices[[column_index]] + matrices[[row_index]]) * 0.5
+        current_row[[row_index]] <- matrices_averaged
+      }
+    }
+
+    result <- matrix(0, nrow=0, ncol=ncol(current_row[[1]]))
+
+    # Iterate through the current_row list and vertically concatenate matrices into the result matrix
+    for (i in 1:length(current_row)) {
+      result <- rbind(result, current_row[[i]])
+    }
+
+    # row
+    rows[[column_index]] <- result
+  }
+
+  # Combine rows to create the omnibus matrix
+  omnibus_matrix <- matrix(0, nrow = nrow(rows[[1]]), ncol=0)
+
+  # Iterate through the rows list and horizontally concatenate matrices into the result matrix
+  for (i in 1:length(rows)) {
+    omnibus_matrix <- cbind(omnibus_matrix, rows[[i]])
+  }
+
+  return(omnibus_matrix)
+}

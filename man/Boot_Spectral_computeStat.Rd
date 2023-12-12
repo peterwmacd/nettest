@@ -18,10 +18,9 @@ Boot_Spectral_computeStat(A1, B1)
 This function computes the test statistics for Boot-Spectral test, serving as an auxiliary functions for the function: ShufflingTests
 }
 \examples{
-A <- genSparseGraph(1, model1) # sample size, m=1
-B <- genSparseGraph(1, model2)
-m <- min(length(A), length(B))
-testStat <- Boot_Spectral_computeStat(A[1:m], B[1:m])
+A <- genSparseGraph(4, model=list(name='ER',n=10,p=.1))
+B <- genSparseGraph(4, model=list(name='ER',n=10,p=.5))
+testStat <- Boot_Spectral_computeStat(A, B)
 
 
 

@@ -1,13 +1,23 @@
 Package: nettest
 Title: Graph Two Sample Testing
 Version: 0.0.0.9000
-Authors@R: 
+Authors@R: c(
     person("Peter W.", "MacDonald", , "pwmacdon@umich.edu", role = c("aut", "cre"),
-           comment = c(ORCID = "0000-0001-7024-7242"))
+           comment = c(ORCID = "0000-0001-7024-7242")),
+    person("Yunze", "Wei", , "yzwei@umich.edu", role=c("aut")),
+    person("Yanxi", "Shi", , "yanxishi@umich.edu", role=c("aut")))
 Description: What the package does (one paragraph).
 License: GPL (>= 3)
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.1.2
+RoxygenNote: 7.2.3
 URL: https://github.com/peterwmacd/nettest
 BugReports: https://github.com/peterwmacd/nettest/issues
+Imports: 
+    graphon (>= 0.3.5),
+    irlba (>= 2.3.5.1),
+    Matrix,
+    pracma (>= 2.4.4),
+    RMTstat (>= 0.3.1),
+    softImpute (>= 1.4-1),
+    stats

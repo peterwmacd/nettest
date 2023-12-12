@@ -25,7 +25,8 @@ The TW test then uses the Tracy-Widom law to approximate the null distribution o
 If the value of T_TW exceeds a certain threshold, then the null hypothesis (i.e., both populations have the same population adjacency) is rejected.
 }
 \examples{
-simu = twosamp_twoblock(n = 4, m = 4, p = 0.3, q = 0.3, epsilon = 0.7)
-test_result = Asymp_TW(simu$A_G, simu$A_H, 0.05, 100)
+A <- genSparseGraph(1,model=list(name='2SBM',n=4,p=0.3,q=0.3))
+B <- genSparseGraph(1,model=list(name='2SBM',n=4,p=1,q=0.3))
+test_result = Asymp_TW(A, B, 0.05, 2)
 
 }

@@ -28,8 +28,8 @@ The Boot-Spectra is based on adjacency spectral embedding (ASE) and uses bootstr
 The test involves computing the rejection decision and the p-value, which is computed to ensure that the null hypothesis (i.e., both populations have the same population adjacency) is rejected only when the test statistic is in the upper α-quantile for both approximate distributions.
 }
 \examples{
-A <- genSparseGraph(1, model1) # sample size, m=1
-B <- genSparseGraph(1, model2)
+A <- genSparseGraph(4, model=list(name='ER',n=10,p=.1))
+B <- genSparseGraph(4, model=list(name='ER',n=10,p=.5))
 test_result = ShufflingTests(A, B, 0.05, 200)
 
 }

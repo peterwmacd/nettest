@@ -1,6 +1,3 @@
-library(Matrix)
-library(irlba)
-
 # Normality Test ----------------------------------------------------------
 
 # Note:
@@ -37,16 +34,17 @@ library(irlba)
 #' @export
 #'
 #' @examples
-#' simu = twosamp_twoblock(n = 4, m = 4, p = 0.3, q = 0.3, epsilon = 0.7)
-#' test_result = Asymp_normal(simu$A_G, simu$A_H, 0.05)
+#' A <- genSparseGraph(4,model=list(name='2SBM',n=4,p=0.3,q=0.3))
+#' B <- genSparseGraph(4,model=list(name='2SBM',n=4,p=1,q=0.3))
+#' test_result = Asymp_normal(A,B, 0.05)
 Asymp_normal <- function(A, B, sig) {
   m_1 = floor(min(length(A), length(B)) / 2) # m/2 (int)
   n <- dim(A[[1]])[1] # nodes
 
-  A1 <- Diagonal(n, 0)
-  B1 <- Diagonal(n, 0)
-  A2 <- Diagonal(n, 0)
-  B2 <- Diagonal(n, 0)
+  A1 <- Matrix::Diagonal(n, 0)
+  B1 <- Matrix::Diagonal(n, 0)
+  A2 <- Matrix::Diagonal(n, 0)
+  B2 <- Matrix::Diagonal(n, 0)
 
   for (i in 1:m_1) {
     #sum first part  (k <= m/2)
@@ -77,7 +75,7 @@ Asymp_normal <- function(A, B, sig) {
   # print("\n")
   test.stat <- sum(numer)/sqrt(sum(denom))
 
-  p.val <- 2 * pnorm(test.stat, lower.tail = FALSE)
+  p.val <- 2 * stats::pnorm(test.stat, lower.tail = FALSE)
   test <- ifelse(p.val <= sig, 1, 0) # 1: reject, 0:not reject
   return(c(test, p.val))
 }

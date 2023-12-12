@@ -1,7 +1,3 @@
-library(Matrix)
-library(irlba)
-
-
 # Chi-square2 Test ---------------------------------------------------------
 # Note:
 #   All graphs are assumed to be unweighted, undirected, and defined on a common vertex set.
@@ -34,8 +30,9 @@ library(irlba)
 #' @export
 #'
 #' @examples
-#' simu = twosamp_twoblock(n = 4, m = 4, p = 0.3, q = 0.3, epsilon = 0.7)
-#' test_result = Asymp_chi2(simu$A_G, simu$A_H, 0.05)
+#' A <- genSparseGraph(4,model=list(name='2SBM',n=4,p=0.3,q=0.3))
+#' B <- genSparseGraph(4,model=list(name='2SBM',n=4,p=1,q=0.3))
+#' test_result = Asymp_chi2(A, B, 0.05)
 #'
 Asymp_chi2 <- function(A, B, sig) {
 
@@ -63,8 +60,8 @@ Asymp_chi2 <- function(A, B, sig) {
 
   mean.diff = colMeans(vec.A) - colMeans(vec.B)
   numer = mean.diff ^ 2
-  denom = apply(vec.A, MARGIN = 2, var) / m.a +
-    apply(vec.B, MARGIN = 2, var) / m.b
+  denom = apply(vec.A, MARGIN = 2, stats::var) / m.a +
+    apply(vec.B, MARGIN = 2, stats::var) / m.b
 
   #denom = 0
   ind_nonzero_dem = (denom != 0)
@@ -72,7 +69,7 @@ Asymp_chi2 <- function(A, B, sig) {
   denom = denom[ind_nonzero_dem]
 
   test.stat = sum(numer / denom)
-  p.val = pchisq(test.stat, df = n * (n - 1) / 2, lower.tail = FALSE)
+  p.val = stats::pchisq(test.stat, df = n * (n - 1) / 2, lower.tail = FALSE)
   test <- ifelse(p.val <= sig, 1, 0)
   return(c(test, p.val))
 }
