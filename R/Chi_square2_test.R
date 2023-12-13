@@ -25,16 +25,18 @@
 #' @param A cell array containing networks in 1st population; each cell is a sparse adjacency matrix
 #' @param B cell array containing networks in 2nd population, each cell being a sparse adjacency matrix
 #' @param sig significance level for acceptance of null hypothesis
+#' @param cov_method covariance estimation method, one of 'diag', 'shrink', or 'full'. Full covariance
+#' will be singular unless there are more total samples than edges
 #'
 #' @return acceptance/rejection decision & p-value for a normal distribution
 #' @export
 #'
 #' @examples
-#' A <- genSparseGraph(4,model=list(name='2SBM',n=4,p=0.3,q=0.3))
-#' B <- genSparseGraph(4,model=list(name='2SBM',n=4,p=1,q=0.3))
+#' A <- genSparseGraph(4,model=list(name='2SBM',n=10,p=0.5,q=0.3))
+#' B <- genSparseGraph(4,model=list(name='2SBM',n=10,p=0.5,q=0.3))
 #' test_result = Asymp_chi2(A, B, 0.05)
 #'
-Asymp_chi2 <- function(A, B, sig) {
+Asymp_chi2 <- function(A, B, sig, cov_method='diag') {
 
   m.a = length(A)
   m.b = length(B)
@@ -59,16 +61,44 @@ Asymp_chi2 <- function(A, B, sig) {
   vec.B = vec.B[, idx_non_zero]
 
   mean.diff = colMeans(vec.A) - colMeans(vec.B)
-  numer = mean.diff ^ 2
+  #numer = mean.diff ^ 2
+
   denom = apply(vec.A, MARGIN = 2, stats::var) / m.a +
-    apply(vec.B, MARGIN = 2, stats::var) / m.b
+   apply(vec.B, MARGIN = 2, stats::var) / m.b
+  # remove zero variances for covariance estimation
+  ind_nonzero_dem = (denom != 0)
+  mean.diff <- mean.diff[ind_nonzero_dem]
+  vec.A <- vec.A[,ind_nonzero_dem]
+  vec.B <- vec.B[,ind_nonzero_dem]
+
+  # cov_method one of diag, shrink, full
+  # previous method is diag (scale by marginal variances assuming independent edges)
+  if(cov_method=='diag'){
+    Q <- diag(1/denom[ind_nonzero_dem])
+  }
+  else if(cov_method=='shrink'){
+    # shrinkage estimation (Shafer + Strimmer 2005), as in Ginestet et al
+    suppressWarnings(sigma.A <- corpcor::cov.shrink(vec.A,verbose=FALSE) / m.a)
+    suppressWarnings(sigma.B <- corpcor::cov.shrink(vec.B,verbose=FALSE) / m.b)
+    Q <- solve(sigma.A + sigma.B)
+  }
+  else if(cov_method=='full'){
+    if(ncol(vec.A) > (m.a + m.b)){
+      print("insufficient sample size for full covariance")
+    }
+    sigma.A <- stats::cov(vec.A) / m.a
+    sigma.B <- stats::cov(vec.B) / m.b
+    Q <- solve(sigma.A + sigma.B)
+  }
+  else{print("unexpected input for cov_method")}
 
   #denom = 0
-  ind_nonzero_dem = (denom != 0)
-  numer = numer[ind_nonzero_dem]
-  denom = denom[ind_nonzero_dem]
+  #ind_nonzero_dem = (denom != 0)
+  #numer = numer[ind_nonzero_dem]
+  #denom = denom[ind_nonzero_dem]
 
-  test.stat = sum(numer / denom)
+  #test.stat = sum(numer / denom)
+  test.stat <- sum( mean.diff * (Q %*% mean.diff))
   p.val = stats::pchisq(test.stat, df = n * (n - 1) / 2, lower.tail = FALSE)
   test <- ifelse(p.val <= sig, 1, 0)
   return(c(test, p.val))

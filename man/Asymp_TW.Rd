@@ -25,8 +25,8 @@ The TW test then uses the Tracy-Widom law to approximate the null distribution o
 If the value of T_TW exceeds a certain threshold, then the null hypothesis (i.e., both populations have the same population adjacency) is rejected.
 }
 \examples{
-A <- genSparseGraph(1,model=list(name='2SBM',n=4,p=0.3,q=0.3))
-B <- genSparseGraph(1,model=list(name='2SBM',n=4,p=1,q=0.3))
+A <- genSparseGraph(1,model=list(name='2SBM',n=10,p=0.8,q=0.3))
+B <- genSparseGraph(1,model=list(name='2SBM',n=10,p=1,q=0.3))
 test_result = Asymp_TW(A, B, 0.05, 2)
 
 }

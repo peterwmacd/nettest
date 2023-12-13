@@ -43,7 +43,7 @@ Asymp_third_power <- function(A, B, sig=0.05, r = 2, pmetric_method = "nbd") {
   Zij = matrix(0, dim(A1ij)[1], dim(A1ij)[1])
 
   num = A1ij - A2ij
-  denom = sqrt(((P_1 %*% (1 - P_1)) / m1 + (P_2 %*% (1 - P_2)) / m2) * dim(A1ij)[1])
+  denom = sqrt((( (P_1*(1 - P_1)) / m1) + ((P_2*(1 - P_2)) / m2)) * dim(A1ij)[1])
 
   Zij = num / denom
 

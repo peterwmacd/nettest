@@ -32,53 +32,66 @@
 #' @export
 #'
 #' @examples
-#' A <- genSparseGraph(1,model=list(name='2SBM',n=4,p=0.3,q=0.3))
-#' B <- genSparseGraph(1,model=list(name='2SBM',n=4,p=1,q=0.3))
+#' A <- genSparseGraph(1,model=list(name='2SBM',n=10,p=0.8,q=0.3))
+#' B <- genSparseGraph(1,model=list(name='2SBM',n=10,p=1,q=0.3))
 #' test_result = Asymp_TW(A, B, 0.05, 2)
 #'
 Asymp_TW <- function(A, B, sig, r) {
-  n = dim(A[[1]])[1]
+  n <- dim(A[[1]])[1]
+  m1 <- length(A)
+  m2 <- length(B)
 
   # spectral clustering
-  idx = spectral_clus((A[[1]]+B[[1]])/2,r);
+  #idx = spectral_clus((A[[1]]+B[[1]])/2,r);
 
+  # (temporary) estimation with graphon::est.LG
+  # eventually add all options like Asymp_third_power.R
+  P_1 <- graphon::est.LG(A, r)$P
+  P_2 <- graphon::est.LG(B, r)$P
+
+  # Compute sample average for the two group
+  Abar = Reduce("+", A) / length(A)
+  Bbar = Reduce("+", B) / length(B)
+  denom = sqrt((( (P_1*(1 - P_1)) / m1) + ((P_2*(1 - P_2)) / m2)) * (n-1))
   #compute C
-  C = A[[1]] - B[[1]]
+  C = (Abar - Bbar)/denom
 
-  for (i in 1:r){
-    for (j in 1:r) {
-      if (i != j){
-        curr = A[[1]][idx == i, idx == j]
-        Pij = mean(curr)
+  # old spectral clustering approach
+  # for (i in 1:r){
+  #   for (j in 1:r) {
+  #     if (i != j){
+  #       curr = A[[1]][idx == i, idx == j]
+  #       Pij = mean(curr)
+  #
+  #       curr = B[[1]][idx == i, idx == j]
+  #       Qij = mean(curr)
+  #     }
+  #     else{
+  #       curr = A[[1]][idx == i, idx == j]
+  #       Pij = sum(curr) / (dim(curr)[1] * (dim(curr)[1] - 1)) # Pij might = x / 0
+  #
+  #       curr = B[[1]][idx == i, idx == j]
+  #       Qij = sum(curr) / (dim(curr)[1] * (dim(curr)[1] - 1))
+  #     }
+  #
+  #     numer = C[idx == i, idx == j]
+  #     denom = sqrt((n - 1) * (Pij) * (1 - Pij) + Qij * (1 - Qij))
+  #
+  #     if (identical(denom, numeric(0))){
+  #       denom = 1e-5
+  #     }
+  #     if (denom == 0){
+  #       denom = 1e-5
+  #     }
+  #     C[idx == i, idx == j] = numer / denom
+  #   }
+  # }
+  # # NA check
+  # C[is.na(C)] = 0
 
-        curr = B[[1]][idx == i, idx == j]
-        Qij = mean(curr)
-      }
-      else{
-        curr = A[[1]][idx == i, idx == j]
-        Pij = sum(curr) / (dim(curr)[1] * (dim(curr)[1] - 1)) # Pij might = x / 0
-
-        curr = B[[1]][idx == i, idx == j]
-        Qij = sum(curr) / (dim(curr)[1] * (dim(curr)[1] - 1))
-      }
-
-      numer = C[idx == i, idx == j]
-      denom = sqrt((n - 1) * (Pij) * (1 - Pij) + Qij * (1 - Qij))
-
-      if (identical(denom, numeric(0))){
-        denom = 1e-5
-      }
-      if (denom == 0){
-        denom = 1e-5
-      }
-      C[idx == i, idx == j] = numer / denom
-    }
-  }
-  # NA check
-  C[is.na(C)] = 0
   #test statistics
   spectral.norm = irlba::irlba(C, 1)$d # the largest singular value
-  test.stat = n ^ (2 / 3) * (spectral.norm - 2)
+  test.stat = (n ^ (2 / 3)) * (spectral.norm - 2)
   p.val = RMTstat::ptw(test.stat, beta=1, lower.tail = FALSE, log.p = FALSE)
   test <- ifelse(p.val <= sig, 1, 0)
 

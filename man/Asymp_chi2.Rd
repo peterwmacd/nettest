@@ -4,7 +4,7 @@
 \alias{Asymp_chi2}
 \title{Chi-square2 Test}
 \usage{
-Asymp_chi2(A, B, sig)
+Asymp_chi2(A, B, sig, cov_method = "diag")
 }
 \arguments{
 \item{A}{cell array containing networks in 1st population; each cell is a sparse adjacency matrix}
@@ -12,6 +12,9 @@ Asymp_chi2(A, B, sig)
 \item{B}{cell array containing networks in 2nd population, each cell being a sparse adjacency matrix}
 
 \item{sig}{significance level for acceptance of null hypothesis}
+
+\item{cov_method}{covariance estimation method, one of 'diag', 'shrink', or 'full'. Full covariance
+will be singular unless there are more total samples than edges}
 }
 \value{
 acceptance/rejection decision & p-value for a normal distribution
@@ -23,8 +26,8 @@ The Asymp-Chi2 test involves computing a test statistic T_chi2 (which is a sum o
 The test involves computing rejection decision and the p-value, which is the probability that the null hypothesis (i.e., both graphs have the same population adjacency) is true.
 }
 \examples{
-A <- genSparseGraph(4,model=list(name='2SBM',n=4,p=0.3,q=0.3))
-B <- genSparseGraph(4,model=list(name='2SBM',n=4,p=1,q=0.3))
+A <- genSparseGraph(4,model=list(name='2SBM',n=10,p=0.5,q=0.3))
+B <- genSparseGraph(4,model=list(name='2SBM',n=10,p=0.5,q=0.3))
 test_result = Asymp_chi2(A, B, 0.05)
 
 }
