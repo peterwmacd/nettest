@@ -146,6 +146,79 @@ Weight_meso <- function(A,B,
   return(out)
 }
 
+
+#' Mesoscale testing
+#'
+#' \code{Mesoscale_test} performs a hypothesis test of equality of edge
+#' expectations for a prespecified collection
+#' (hypothesis set) of edges between two samples of aligned networks.
+#' It is compatible with either weighted (Gaussian) edge or binary edge networks
+#' (specified with argument \code{edge_type}), undirected or directed networks
+#' (\code{directed}), and networks with or without self loops (\code{self_loops}).
+#' The mesoscale testing methodology (see MacDonald et al., 2024+) uses edge
+#' variables outside the hypothesis set to learn a projection of the edges in
+#' the hypothesis set, to reduce the dimension of the test and improve test power.
+#'
+#' @usage Mesoscale_test(A,B,sig,hyp_set,
+#'                       edge_type='weighted',dimension,
+#'                       directed=TRUE,self_loops=TRUE,
+#'                       proj_type='impute',var_type='basic',
+#'                       masked_set)
+#'
+#' @param A a list containing networks in 1st sample; each element is an adjacency matrix.
+#' @param B a list containing networks in 2nd sample, each element is an adjacency matrix, with nodes aligned with \code{A}.
+#' @param sig the significance level for the hypothesis test.
+#' @param hyp_set the hypothesis set of node pairs, specified as one of: (1) a 2-element list
+#' containing the incident row and column indices (rectangle), (2) a list of 2-element lists each containing
+#' incident row and column indices (collection of rectangles), or (3) a 2-column matrix of (row,column) index
+#' pairs (unstructured hypothesis set).
+#' @param edge_type a string, either \code{'weighted'} or \code{'binary'} depending on the possible
+#' edge values. The test with weighted edges is performed assuming Gaussian edges. Defaults to \code{'weighted'}.
+#' @param dimension a positive integer, specifies the dimension of projection in the mesoscale test.
+#' @param directed a Boolean, specifies whether the network is directed. If \code{directed=FALSE}, the
+#' testing methodology will be adjusted to account for symmetry. Defaults to \code{TRUE}.
+#' @param self_loops a Boolean, if \code{FALSE} the test will ignore diagonal entries. Defaults to \code{TRUE}.
+#' @param proj_type a string, either \code{'impute'} or \code{'one_step'} to choose the projection learning
+#' approach. Recommendation is \code{'one_step'} for rectangular hypothesis sets, \code{'impute'} for unstructured
+#' hypothesis sets. Defaults to \code{'impute'}.
+#' @param var_type a string, either \code{'basic'} or \code{'quasi'} to choose the variance estimation approach. For
+#' binary edges, \code{'quasi'} corresponds to fitting with a quasibinomial GLM. Defaults to \code{'basic'}.
+#' For weighted edges, \code{'quasi'} calibrates the variance based on the variability of the edges orthogonal to the projected data, while
+#' \code{'basic'} uses the variability of the projected data within the samples.
+#' @param masked_set a masked set of node pairs ignored in both the projection learning and testing phases
+#' of the mesoscale methodology. Specified in the same format as \code{hyp_set}. Defaults to the empty set.
+#'
+#'
+#' @return a 2-element vector consisting of the acceptance/rejection decision & p-value for the mesoscale test.
+#'
+#' @export
+#'
+#' @examples
+#' A <- genSparseGraph(4,model=list(name='2SBM',n=10,p=0.5,q=0.3))
+#' B <- genSparseGraph(4,model=list(name='2SBM',n=10,p=0.5,q=0.3))
+#'
+#' # hypothesis set specified as a rectangle
+#' meso1 <- Mesoscale_test(A,B,sig=0.1,
+#'                         hyp_set=list(1:4,1:4),
+#'                         edge_type='binary',dimension=1,directed=FALSE,self_loops=FALSE,
+#'                         proj_type='one_step',
+#'                         var_type='basic')
+#'
+#' # same hypothesis set specified as unstructured indices
+#' meso2 <- Mesoscale_test(A,B,sig=0.1,
+#'                         hyp_set=cbind(c(1,1,1,2,2,3),c(2,3,4,3,4,4)),
+#'                         edge_type='binary',dimension=1,directed=FALSE,self_loops=FALSE,
+#'                         proj_type='one_step',
+#'                         var_type='basic')
+#' # check that meso1 and meso2 give the same result
+#'
+#' # hypothesis set and masked sets specified as rectangles
+#' meso3 <- Mesoscale_test(A,B,sig=0.1,
+#'                         hyp_set=list(list(1:2,1:2),list(9:10,9:10)),
+#'                         edge_type='binary',dimension=1,directed=FALSE,self_loops=FALSE,
+#'                         proj_type='impute',
+#'                         var_type='quasi')
+#'
 Mesoscale_test <- function(A,B,
                            sig,
                            hyp_set, # a rectangle (list of {row,col}), a 2-column matrix of entries, or a list if rectangles

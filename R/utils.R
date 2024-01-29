@@ -160,7 +160,12 @@ Subspace_impute <- function(A1bar,A2bar,d,
     Lproj <- impdiff$u
     Rproj <- impdiff$v
   }
-  return(list(Lproj=Lproj,Rproj=Rproj))
+  if(d==1){
+    return(list(Lproj=matrix(Lproj,ncol=1),Rproj=matrix(Rproj,ncol=1)))
+  }
+  else{
+    return(list(Lproj=Lproj,Rproj=Rproj))
+  }
 }
 
 #### OMNI test ####
