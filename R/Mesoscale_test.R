@@ -121,8 +121,14 @@ Weight_meso <- function(A,B,
   ss <- nrow(UV)
   dd <- ncol(UV)
   # test
-  X <- t(sapply(1:m,function(kk){c(crossprod(UV, A[[kk]][s_ind_data]))}))
-  Y <- t(sapply(1:m,function(kk){c(crossprod(UV, B[[kk]][s_ind_data]))}))
+  if(dd==1){
+    X <- matrix(sapply(1:m,function(kk){c(crossprod(UV, A[[kk]][s_ind_data]))}),ncol=1)
+    Y <- matrix(sapply(1:m,function(kk){c(crossprod(UV, B[[kk]][s_ind_data]))}),ncol=1)
+  }
+  else{
+    X <- t(sapply(1:m,function(kk){c(crossprod(UV, A[[kk]][s_ind_data]))}))
+    Y <- t(sapply(1:m,function(kk){c(crossprod(UV, B[[kk]][s_ind_data]))}))
+  }
   # basic F test on augmented data assuming equal variance, independence
   # sse values
   sse_null <- sum((scale(rbind(X,Y),scale=F))^2)
