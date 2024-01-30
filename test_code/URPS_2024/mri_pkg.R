@@ -6,9 +6,11 @@
 library(devtools)
 install_github('peterwmacd/nettest')
 library(nettest)
-# wd
-setwd('~/packages/nettest/test_code/')
+
+# working directory ***CHANGE
+setwd('~/packages/nettest/test_code/URPS_2024/')
 source('aux_functions.R')
+
 # study
 study <- 'taowu'
 # parcellation + number of regions
@@ -24,7 +26,7 @@ M <- m1 + m2
 
 # control networks
 A1 <- array(NA,c(n,n,m1))
-A1l <- list()
+A1l <- list() # also store as a list for Mesoscale_test
 ids1 <- metadata$Subject[metadata$Group=='Control']
 for(kk in 1:m1){
   matfile <- paste0('auckland_mri_data/',study,'/sub-',ids1[kk],
@@ -35,7 +37,7 @@ for(kk in 1:m1){
 
 # case networks
 A2 <- array(NA,c(n,n,m2))
-A2l <- list()
+A2l <- list() # also store as a list for Mesoscale_test
 ids2 <- metadata$Subject[metadata$Group=='PD']
 for(kk in 1:m2){
   matfile <- paste0('auckland_mri_data/',study,'/sub-',ids2[kk],
@@ -101,12 +103,12 @@ bt2 <- basic_ftest(A1,A2,hcb,hcb,0.1)
 bt3 <- basic_ftest(A1,A2,hfl,hcb,0.1)
 
 # then get the adjusted fdr corrected p-values
-pb_bon <- p.adjust(c(bt1$pval,bt2$pval,bt3$pval),method='none')
+pb <- p.adjust(c(bt1$pval,bt2$pval,bt3$pval),method='none')
 # same conclusion, only reject the CB <-> CB block hypothesis at level 0.1, same
 # conclusion with a holm correction
 # store results
-pval_table[1,1:3] <- pb_bon
-pval_table[1,4:6] <- as.integer(pb_bon < 0.05)
+pval_table[1,1:3] <- pb
+pval_table[1,4:6] <- as.integer(pb < 0.05)
 
 #### block testing ####
 
@@ -114,6 +116,9 @@ pval_table[1,4:6] <- as.integer(pb_bon < 0.05)
 # means of each block (note this is a special case of the mesoscale test with
 # prespecified projections), this reduces dimension but 'naively', and may lose
 # power relative to the basic test
+
+# NOTE: this uses the Mesoscale_test internal Weight_meso, note it is very similar
+# to the mesoscale test but with a prespecified (constant 1-dim) projection
 
 Pfl <- matrix(0,n,1)
 Pfl[hfl] <- 1/sqrt(length(hfl))
@@ -185,10 +190,10 @@ for(dd in dvec){
                                  masked_set=mask3)
 
   # p-value adjustment
-  pp_bon <- p.adjust(c(pt1[2],pt2[2],pt3[2]),method='none')
+  pp <- p.adjust(c(pt1[2],pt2[2],pt3[2]),method='none')
 
-  pval_table[resrow,1:3] <- pp_bon
-  pval_table[resrow,4:6] <- as.integer(pp_bon < 0.05)
+  pval_table[resrow,1:3] <- pp
+  pval_table[resrow,4:6] <- as.integer(pp < 0.05)
   print(paste0('done ',dd))
 }
 
@@ -198,6 +203,9 @@ for(dd in dvec){
 # random projection of the data for d=2,4,6,8,10 for 50 replications.
 # Shows that the mesoscale approach is indeed getting useful low-dimensional
 # information out of the data.
+
+# NOTE: this uses the Mesoscale_test internal Weight_meso, note it is very similar
+# to the mesoscale test but with a prespecified (random) projection
 
 randreps <- 50
 pvals_rand <- array(NA,c(length(dvec),3,randreps))
@@ -232,9 +240,9 @@ for(dd in dvec){
                                   directed=FALSE)
 
     # p-value adjustment
-    pp_bon <- p.adjust(c(pt1$pval,pt2$pval,pt3$pval),method='none')
+    pp <- p.adjust(c(pt1$pval,pt2$pval,pt3$pval),method='none')
 
-    pvals_rand[resrow,,bb] <- pp_bon
+    pvals_rand[resrow,,bb] <- pp
   }
 
   for(ii in 1:3){
@@ -249,6 +257,7 @@ for(dd in dvec){
 
 pval_table <- round(pval_table,7)
 # report as a table in the manuscript
+# NOTE: currently does not match results in draft manuscript
 
 # save results
 saveRDS(pval_table,file='mri_pkg_table.rds')
