@@ -7,7 +7,7 @@
 Mesoscale_test(A,B,sig,hyp_set,
                       edge_type='weighted',dimension,
                       directed=TRUE,self_loops=TRUE,
-                      proj_type='impute',var_type='basic',
+                      proj_type='impute',var_type='basic',centered,
                       masked_set)
 }
 \arguments{
@@ -40,6 +40,9 @@ hypothesis sets. Defaults to \code{'impute'}.}
 binary edges, \code{'quasi'} corresponds to fitting with a quasibinomial GLM. Defaults to \code{'basic'}.
 For weighted edges, \code{'quasi'} calibrates the variance based on the variability of the edges orthogonal to the projected data, while
 \code{'basic'} uses the variability of the projected data within the samples.}
+
+\item{centered}{a Boolean, specifies whether to center the projections to ignore differences in the overall
+edge mean on the mesoscale set. Defaults to \code{FALSE}.}
 
 \item{masked_set}{a masked set of node pairs ignored in both the projection learning and testing phases
 of the mesoscale methodology. Specified in the same format as \code{hyp_set}. Defaults to the empty set.}
@@ -82,6 +85,7 @@ meso3 <- Mesoscale_test(A,B,sig=0.1,
                         hyp_set=list(list(1:2,1:2),list(9:10,9:10)),
                         edge_type='binary',dimension=1,directed=FALSE,self_loops=FALSE,
                         proj_type='impute',
-                        var_type='quasi')
+                        var_type='quasi',
+                        centered=TRUE)
 
 }

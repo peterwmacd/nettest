@@ -99,7 +99,8 @@ Weight_meso <- function(A,B,
                         hyp_indices,
                         hyp_proj,
                         var_type,
-                        directed){
+                        directed,
+                        centered){
   # dimensions
   m <- length(A)
   n <- nrow(A[[1]])
@@ -178,7 +179,7 @@ Weight_meso <- function(A,B,
 #' @usage Mesoscale_test(A,B,sig,hyp_set,
 #'                       edge_type='weighted',dimension,
 #'                       directed=TRUE,self_loops=TRUE,
-#'                       proj_type='impute',var_type='basic',
+#'                       proj_type='impute',var_type='basic',centered,
 #'                       masked_set)
 #'
 #' @param A a list containing networks in 1st sample; each element is an adjacency matrix.
