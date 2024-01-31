@@ -7,7 +7,8 @@ Binary_meso <- function(A,B,
                         hyp_indices,
                         hyp_proj,
                         var_type,
-                        directed){
+                        directed,
+                        centered){
   # left/right objects
   Lproj <- hyp_proj$Lproj
   Rproj <- hyp_proj$Rproj
@@ -35,6 +36,10 @@ Binary_meso <- function(A,B,
     s_ind_data <- s_ind
     # projection basis
     UV <- (Rproj %x% Lproj)[c(s_ind),]
+  }
+  # centering
+  if(centered){
+    UV <- center_orth(UV)
   }
   # dimensions
   ss <- nrow(UV)
@@ -118,6 +123,11 @@ Weight_meso <- function(A,B,
     # projection basis
     UV <- pracma::orth((Rproj %x% Lproj)[c(s_ind),])
   }
+  # centering
+  if(centered){
+    UV <- center_orth(UV)
+  }
+  # final projection dimensions
   ss <- nrow(UV)
   dd <- ncol(UV)
   # test
@@ -191,6 +201,8 @@ Weight_meso <- function(A,B,
 #' binary edges, \code{'quasi'} corresponds to fitting with a quasibinomial GLM. Defaults to \code{'basic'}.
 #' For weighted edges, \code{'quasi'} calibrates the variance based on the variability of the edges orthogonal to the projected data, while
 #' \code{'basic'} uses the variability of the projected data within the samples.
+#' @param centered a Boolean, specifies whether to center the projections to ignore differences in the overall
+#' edge mean on the mesoscale set. Defaults to \code{FALSE}.
 #' @param masked_set a masked set of node pairs ignored in both the projection learning and testing phases
 #' of the mesoscale methodology. Specified in the same format as \code{hyp_set}. Defaults to the empty set.
 #'
@@ -223,7 +235,8 @@ Weight_meso <- function(A,B,
 #'                         hyp_set=list(list(1:2,1:2),list(9:10,9:10)),
 #'                         edge_type='binary',dimension=1,directed=FALSE,self_loops=FALSE,
 #'                         proj_type='impute',
-#'                         var_type='quasi')
+#'                         var_type='quasi',
+#'                         centered=TRUE)
 #'
 Mesoscale_test <- function(A,B,
                            sig,
@@ -235,6 +248,7 @@ Mesoscale_test <- function(A,B,
                            self_loops = TRUE, # overrides diagonal entries in the hyp_set, masks them in the imputation routine
                            proj_type='impute',# or onestep
                            var_type='basic', # or 'quasi'
+                           centered=FALSE,
                            masked_set=list(NULL,NULL) # a rectangle (list of {row,col}), a 2-column matrix of entries, or a list if rectangles
 ){
   # parameter checking
@@ -306,7 +320,8 @@ Mesoscale_test <- function(A,B,
                                 hyp_indices,
                                 masked_indices,
                                 self_loops,
-                                directed)
+                                directed,
+                                centered)
   }
   else{
     hyp_proj <- Subspace_onestep(Abar,Bbar,
@@ -314,7 +329,8 @@ Mesoscale_test <- function(A,B,
                                  hyp_indices,
                                  masked_indices,
                                  self_loops,
-                                 directed)
+                                 directed,
+                                 centered)
   }
   # test procedures
   if(edge_type=='weighted'){
@@ -322,14 +338,16 @@ Mesoscale_test <- function(A,B,
                             hyp_indices,
                             hyp_proj,
                             var_type,
-                            directed)
+                            directed,
+                            centered)
   }
   else{
     test_out <- Binary_meso(A,B,
                             hyp_indices,
                             hyp_proj,
                             var_type,
-                            directed)
+                            directed,
+                            centered)
   }
   # returns acceptance/rejection decision and a pvalue
   return(c(as.integer(test_out$pval <= sig),test_out$pval))

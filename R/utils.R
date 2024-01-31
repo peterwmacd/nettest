@@ -103,11 +103,19 @@ Subspace_onestep <- function(A1bar,A2bar,d,
                              hyp_indices,
                              masked_indices,
                              self_loops,
-                             directed){
+                             directed,
+                             centered){
   # if no self loops, check for diagonal NAs and replace with 0's
   if(!self_loops & any(is.na(c(diag(A1bar),diag(A2bar))))){
     diag(A1bar) <- 0
     diag(A2bar) <- 0
+  }
+  # centering/difference matrix
+  if(centered){
+    Adiff <- (A1bar - A2bar) - mean(A1bar - A2bar,na.rm=TRUE)
+  }
+  else{
+    Adiff <- A1bar - A2bar
   }
   # dimension
   n <- nrow(A1bar)
@@ -117,9 +125,9 @@ Subspace_onestep <- function(A1bar,A2bar,d,
   mrow <- which(rowSums(s_ind)>0)
   mcol <- which(colSums(s_ind)>0)
   # estimate blocks
-  Chat <- A1bar[,-mcol] - A2bar[,-mcol]
-  Rhat <- A1bar[-mrow,] - A2bar[-mrow,]
-  Dhat <- A1bar[-mrow,-mcol] - A2bar[-mrow,-mcol]
+  Chat <- Adiff[,-mcol]
+  Rhat <- Adiff[-mrow,]
+  Dhat <- Adiff[-mrow,-mcol]
   # estimate T
   That <- Chat %*% Tpinv(Dhat,d) %*% Rhat
   # estimate subspaces
@@ -142,10 +150,17 @@ Subspace_impute <- function(A1bar,A2bar,d,
                             hyp_indices,
                             masked_indices,
                             self_loops,
-                            directed){
+                            directed,
+                            centered){
   uindices <- rbind(hyp_indices,masked_indices)
   # estimate blocks
-  Adiff <- A1bar - A2bar
+  if(centered){
+    Adiff <- (A1bar - A2bar) - mean(A1bar - A2bar,na.rm=TRUE)
+  }
+  else{
+    Adiff <- A1bar - A2bar
+  }
+  # mask self loops, hypothesis set and masked indices
   if(!self_loops){
     diag(Adiff) <- NA
   }
@@ -166,6 +181,15 @@ Subspace_impute <- function(A1bar,A2bar,d,
   else{
     return(list(Lproj=Lproj,Rproj=Rproj))
   }
+}
+
+# centering function for an n times d orthonormal matrix
+center_orth <- function(W){
+  n <- nrow(W)
+  cmat <- diag(n) - matrix(1,n,n)/n
+  Wc <- cmat %*% W
+  Wc_orth <- pracma::orth(Wc)
+  return(Wc_orth)
 }
 
 #### OMNI test ####
