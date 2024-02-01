@@ -40,7 +40,7 @@ Binary_meso <- function(A,B,
   }
   # centering
   if(centered){
-    UV <- center_orth(UV)
+    UV <- cbind(rep(1/sqrt(nrow(UV)),nrow(UV)),center_orth(UV))
   }
   # dimensions
   ss <- nrow(UV)
@@ -68,7 +68,12 @@ Binary_meso <- function(A,B,
   }
   # get logistic regression coefficients
   gamma1 <- moda$coefficients[1:dd]
-  gamma2 <- moda$coefficients[-(1:dd)]
+  if(centered){
+    gamma2 <- moda$coefficients[-(1:(dd+1))]
+  }
+  else{
+    gamma2 <- moda$coefficients[-(1:dd)]
+  }
   # estimate covariance
   # linear model predictor
   lmhat <- c(UV %*% gamma1)
@@ -77,8 +82,14 @@ Binary_meso <- function(A,B,
   prop_vec_reg <- sign(prop_vec - 0.5)*pmax(abs(prop_vec - 0.5) - (1/(2*(m1+m2))),0) + 0.5
   smhat <- Logit(prop_vec_reg)
   # covariances
-  Ghat <- 2*(t(UV) %*% (diag(vexpit(lmhat)) %*% UV))
-  Fhat <- 2*(t(UV) %*% (diag(vexpit(smhat)) %*% UV))
+  if(centered){
+    Ghat <- 2*(t(UV[,-1,drop=FALSE]) %*% (diag(vexpit(lmhat)) %*% UV[,-1,drop=FALSE]))
+    Fhat <- 2*(t(UV[,-1,drop=FALSE]) %*% (diag(vexpit(smhat)) %*% UV[,-1,drop=FALSE]))
+  }
+  else{
+    Ghat <- 2*(t(UV) %*% (diag(vexpit(lmhat)) %*% UV))
+    Fhat <- 2*(t(UV) %*% (diag(vexpit(smhat)) %*% UV))
+  }
   # full inverse covariance
   iVhat <- Ghat %*% (solve(Fhat) %*% Ghat)
   # stat numerator
