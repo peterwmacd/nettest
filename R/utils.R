@@ -110,13 +110,8 @@ Subspace_onestep <- function(A1bar,A2bar,d,
     diag(A1bar) <- 0
     diag(A2bar) <- 0
   }
-  # centering/difference matrix
-  if(centered){
-    Adiff <- (A1bar - A2bar) - mean(A1bar - A2bar,na.rm=TRUE)
-  }
-  else{
-    Adiff <- A1bar - A2bar
-  }
+  # difference matrix
+  Adiff <- A1bar - A2bar
   # dimension
   n <- nrow(A1bar)
   # compute masked rows/columns
@@ -128,8 +123,15 @@ Subspace_onestep <- function(A1bar,A2bar,d,
   Chat <- Adiff[,-mcol]
   Rhat <- Adiff[-mrow,]
   Dhat <- Adiff[-mrow,-mcol]
+  # overall mean
+  if(centered){
+    mu <- mean(c(Chat,Rhat,Dhat))
+  }
+  else{
+    mu <- 0
+  }
   # estimate T
-  That <- Chat %*% Tpinv(Dhat,d) %*% Rhat
+  That <- (Chat - mu) %*% Tpinv((Dhat - mu),d) %*% (Rhat - mu)
   # estimate subspaces
   temp <- irlba::irlba(That,d)
   # store left and right-hand side projections
@@ -154,17 +156,16 @@ Subspace_impute <- function(A1bar,A2bar,d,
                             centered){
   uindices <- rbind(hyp_indices,masked_indices)
   # estimate blocks
-  if(centered){
-    Adiff <- (A1bar - A2bar) - mean(A1bar - A2bar,na.rm=TRUE)
-  }
-  else{
-    Adiff <- A1bar - A2bar
-  }
+  Adiff <- A1bar - A2bar
   # mask self loops, hypothesis set and masked indices
   if(!self_loops){
     diag(Adiff) <- NA
   }
   Adiff[uindices] <- NA
+  # centering
+  if(centered){
+    Adiff <- Adiff - mean(Adiff,na.rm=TRUE)
+  }
   # esimate subspaces
   impdiff <- softImpute::softImpute(Adiff,rank.max=d,lambda=0,type='svd')
   # store left and right-hand side projections
