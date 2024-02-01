@@ -13,10 +13,11 @@ Binary_meso <- function(A,B,
   Lproj <- hyp_proj$Lproj
   Rproj <- hyp_proj$Rproj
   # dimensions
-  m <- length(A)
+  m1 <- length(A)
+  m2 <- length(B)
   n <- nrow(A[[1]])
   # reset tilde if m is 1
-  if(m==1){
+  if(min(m1,m2)==1){
     var_type <- 'basic'
   }
   # hypothesis set entries as a matrix
@@ -50,10 +51,14 @@ Binary_meso <- function(A,B,
   W <- rbind(UV,-UV)
   # final design
   Xall <- cbind(X,W)
-  # populate full successes
-  s_vec <- rowSums(sapply(1:m,function(kk){c(A[[kk]][s_ind_data],B[[kk]][s_ind_data])}))
-  # calculate failures
-  f_vec <- m - s_vec
+
+  # populate successes
+  s_vecA <- rowSums(sapply(1:m1,function(kk){c(A[[kk]][s_ind_data],rep(0,ss))}))
+  s_vecB <- rowSums(sapply(1:m2,function(kk){c(rep(0,ss),B[[kk]][s_ind_data])}))
+  s_vec <- s_vecA + s_vecB
+  # populate failures
+  f_vec <- c(rep(m1,ss),rep(m2,ss)) - s_vec
+
   # fit logistic regression
   if(var_type=='quasi'){
     moda <- stats::glm(cbind(s_vec,f_vec)~Xall-1,family=stats::quasibinomial())
@@ -68,8 +73,8 @@ Binary_meso <- function(A,B,
   # linear model predictor
   lmhat <- c(UV %*% gamma1)
   # saturated model predictor
-  prop_vec <- (s_vec[1:ss] + s_vec[-(1:ss)])/(2*m)
-  prop_vec_reg <- sign(prop_vec - 0.5)*pmax(abs(prop_vec - 0.5) - (1/(4*m)),0) + 0.5
+  prop_vec <- (s_vec[1:ss] + s_vec[-(1:ss)])/(m1+m2)
+  prop_vec_reg <- sign(prop_vec - 0.5)*pmax(abs(prop_vec - 0.5) - (1/(2*(m1+m2))),0) + 0.5
   smhat <- Logit(prop_vec_reg)
   # covariances
   Ghat <- 2*(t(UV) %*% (diag(vexpit(lmhat)) %*% UV))
@@ -77,7 +82,7 @@ Binary_meso <- function(A,B,
   # full inverse covariance
   iVhat <- Ghat %*% (solve(Fhat) %*% Ghat)
   # stat numerator
-  num <- m*sum(gamma2 * (iVhat %*% gamma2))
+  num <- ((m1+m2)/2)*sum(gamma2 * (iVhat %*% gamma2))
   # overdispersion estimate as denominator
   den <- summary(moda)$dispersion
   # compile results and return
@@ -102,7 +107,8 @@ Weight_meso <- function(A,B,
                         directed,
                         centered){
   # dimensions
-  m <- length(A)
+  m1 <- length(A)
+  m2 <- length(B)
   n <- nrow(A[[1]])
   # left/right objects
   Lproj <- hyp_proj$Lproj
@@ -133,12 +139,12 @@ Weight_meso <- function(A,B,
   dd <- ncol(UV)
   # test
   if(dd==1){
-    X <- matrix(sapply(1:m,function(kk){c(crossprod(UV, A[[kk]][s_ind_data]))}),ncol=1)
-    Y <- matrix(sapply(1:m,function(kk){c(crossprod(UV, B[[kk]][s_ind_data]))}),ncol=1)
+    X <- matrix(sapply(1:m1,function(kk){c(crossprod(UV, A[[kk]][s_ind_data]))}),ncol=1)
+    Y <- matrix(sapply(1:m2,function(kk){c(crossprod(UV, B[[kk]][s_ind_data]))}),ncol=1)
   }
   else{
-    X <- t(sapply(1:m,function(kk){c(crossprod(UV, A[[kk]][s_ind_data]))}))
-    Y <- t(sapply(1:m,function(kk){c(crossprod(UV, B[[kk]][s_ind_data]))}))
+    X <- t(sapply(1:m1,function(kk){c(crossprod(UV, A[[kk]][s_ind_data]))}))
+    Y <- t(sapply(1:m2,function(kk){c(crossprod(UV, B[[kk]][s_ind_data]))}))
   }
   # basic F test on augmented data assuming equal variance, independence
   # sse values
@@ -149,11 +155,11 @@ Weight_meso <- function(A,B,
     Xa <- (diag(ss) - tcrossprod(UV)) %*% sapply(A,function(x){x[s_ind_data]})
     Ya <- (diag(ss) - tcrossprod(UV)) %*% sapply(B,function(x){x[s_ind_data]})
     sse_alt_den <- sum(Xa^2) + sum(Ya^2)
-    df_den <- 2*m*(ss - dd)
+    df_den <- (m1+m2)*(ss - dd)
   }
   else{
     sse_alt_den <- sse_alt
-    df_den <- dd*(2*(m-1))
+    df_den <- dd*(m1+m2-2)
   }
   # statistic, dfs, pvalue
   out <- list()
@@ -303,14 +309,15 @@ Mesoscale_test <- function(A,B,
     }
   }
   # dimensions
-  m <- length(A)
+  m1 <- length(A)
+  m2 <- length(B)
   n <- nrow(A[[1]])
   # group means
-  Abar <- Reduce('+',A)/m
-  Bbar <- Reduce('+',B)/m
+  Abar <- Reduce('+',A)/m1
+  Bbar <- Reduce('+',B)/m2
   # transformation for binary edges
   if(edge_type=='binary'){
-    delta <- 1/(3*m)
+    delta <- 1/(3*((m1+m2)/2))
     Abar <- Logit(pmin(pmax(Abar,delta),1-delta))
     Bbar <- Logit(pmin(pmax(Bbar,delta),1-delta))
   }
