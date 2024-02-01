@@ -99,8 +99,14 @@ Binary_meso <- function(A,B,
   # compile results and return
   out <- list()
   out$stat <- num/den
-  out$dfs <- dd
-  out$pval <- stats::pchisq(out$stat,dd,lower.tail=FALSE)
+  if(centered){
+    out$dfs <- dd-1
+    out$pval <- stats::pchisq(out$stat,dd-1,lower.tail=FALSE)
+  }
+  else{
+    out$dfs <- dd
+    out$pval <- stats::pchisq(out$stat,dd,lower.tail=FALSE)
+  }
   return(out)
 }
 
