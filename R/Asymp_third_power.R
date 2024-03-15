@@ -1,9 +1,18 @@
 # Asymptotic 3rd power test (Chen et al. 2020)
 #' @export
-Asymp_third_power <- function(A, B, sig=0.05, r = 2, pmetric_method = "nbd") {
-
+Asymp_third_power <- function(A, B, sig=0.05, test_opts=list()){
+  # dimensions
   m1 = length(A) # m1
   m2 = length(B) # m2
+  # fill options
+  if(is.null(test_opts$r)){
+    test_opts$r <- 2
+  }
+  if(is.null(test_opts$pmetric_method)){
+    test_opts$pmetric_method <- 'nbd'
+  }
+  r <- test_opts$r
+  pmetric_method <- test_opts$pmetric_method
 
   # spectral clustering using
   if (pmetric_method == "LG"){

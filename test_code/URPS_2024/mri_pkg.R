@@ -131,21 +131,24 @@ blt1 <- nettest:::Weight_meso(A1l,A2l,
                               hyp_indices=as.matrix(expand.grid(rect1)),
                               hyp_proj=list(Lproj=Pfl,Rproj=Pfl),
                               var_type='basic',
-                              directed=FALSE)
+                              directed=FALSE,
+                              centered=FALSE)
 
 # 2. diagonal block CB <-> CB
 blt2 <- nettest:::Weight_meso(A1l,A2l,
                               hyp_indices=as.matrix(expand.grid(rect2)),
                               hyp_proj=list(Lproj=Pcb,Rproj=Pcb),
                               var_type='basic',
-                              directed=FALSE)
+                              directed=FALSE,
+                              centered=FALSE)
 
 # 3. off-diagonal block FL <-> CB
 blt3 <- nettest:::Weight_meso(A1l,A2l,
                               hyp_indices=as.matrix(expand.grid(rect3)),
                               hyp_proj=list(Lproj=Pfl,Rproj=Pcb),
                               var_type='basic',
-                              directed=FALSE)
+                              directed=FALSE,
+                              centered=FALSE)
 
 # then get the adjusted fdr corrected p-values
 pb_block <- p.adjust(c(blt1$pval,blt2$pval,blt3$pval),method='none')
