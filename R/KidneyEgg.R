@@ -34,3 +34,37 @@ generate_kidney_egg <- function(n, m, p, q, theta = NULL) {
   
   return(A)
 }
+
+# Generates a controlled dynamic Kidney-Egg model
+generate_dynamic_kidney_egg <- function(n, m, p, q, T = 10, 
+                                        anomaly_start=5, anomaly_end=7, 
+                                        theta = NULL) {
+  # # n: Total # of nodes
+  # m: # of "Egg" nodes (chatter nodes)
+  # p: Probability of K-K edges and K-E edges
+  # q: Probability of E-E edges (should be greater than p, hence the "chatter"
+  # T: Total # of time steps
+  # start: timestep when egg apears
+  # end: timestep when egg disappears
+  # theta: (Optional) Degree correction vector of length n
+  
+  # Output: List of Adjacency matrices (nxn) of the generated undirected graphs
+  
+  # List of adjecency matrices for each time stepr 
+  A_list <- list()
+  
+  for (t in 1:T) {
+    if (t >= anomaly_start && t <= anomaly_end) {
+      # Generate Kidney Egg Model during chatter event (anomaly)
+      A <- generate_kidney_egg(n, m, p, q, theta)
+    } else {
+      # There are no egg nodes (normal behaviour): regular ER(n,p)
+      # Note: ER model has 0 egg nodes and p=q
+      A <- generate_kidney_egg(n, 0, p, p, theta)
+    }
+    
+    A_list[[t]] <- A
+  }
+  
+  return(A_list)
+}
