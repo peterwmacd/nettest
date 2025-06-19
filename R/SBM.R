@@ -42,20 +42,30 @@ generate_sbm <- function(n, K, Z, B, theta = NULL) {
 
 # Generates a dynamic SB
 #  optional: generate a dynamic DCSBM
-generate_dynamic_sbm <- function(n, K, Z, B, theta=NULL, T = 10,
-                                 persistence=0.1) {
+generate_dynamic_sbm <- function(n, K, Z, B, new_B,theta=NULL, T = 10,
+                                 persistence=0.1, start_time, 
+                                 end_time=start_time) {
   # n: # of nodes
   # K: # of blocks (communities)
   # Z: Block membership matrix (n x K) 
   # B: Block connection matrix (K x K)
+  # new_B: New Block connection matrix (K x K)
   # theta: (Optional, if DCSBM is desired) Vector of degree parameters (length N) 
   # T: # of time steps for dynamic simulation
   # persistence: probability of block change for a node
+  # start_time: starting timestep of the changepoint
+  # end_time: last timestep of the changepoint
   
   # List of adjacency matrices at each time step
   A_list <- list()
+  # Starting persistence should be 0 until changepoint occurs
+  cur_persistence = 0
   
   for (t in 1:T) {
+    # Changepoint occurs, persistence changes
+    if (t == start_time){
+      cur_persistence = persistence
+    }
     for (i in 1:n) {
       # Update block membership
       if (run_if(1) < persistence) {
@@ -69,6 +79,10 @@ generate_dynamic_sbm <- function(n, K, Z, B, theta=NULL, T = 10,
     }
     A <- generate_sbm(n, K, Z, B, theta)
     A_list[t] = A
+    # Changepoint ends, persistence back to 0
+    if (t == end_time) {
+      cur_persistence = 0
+    }
   }
   
   return(A_list)
