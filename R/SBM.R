@@ -4,13 +4,15 @@ library(Matrix)
 
 # This function generates a static Stochastic Block Model
 #  optional: generates a Degree Corrected SBM
-generate_sbm <- function(n, K, Z, B, theta = NULL) {
+generate_sbm <- function(n, K, Z, B, theta = NULL, seed = NULL) {
   # n: # of nodes
   # K: # of blocks (communities)
   # Z: Block membership matrix (n x K) 
   # B: Block connection matrix (K x K)
   # theta: (Optional, if DCSBM is desired) Vector of degree parameters (length N) 
+  # seed: (Optional) Seed for reproducibility
   
+  if (!is.null(seed)) set.seed(seed)
   
   # Create adjacency matrix
   A <- matrix(0, nrow=n, ncol=n)
@@ -27,6 +29,8 @@ generate_sbm <- function(n, K, Z, B, theta = NULL) {
       # Degree Correction (if given theta)
       if (!is.null(theta)) {
         prob_ij <- prob_ij * theta[i] * theta[j]
+        # Prevents overflow
+        prob_ij <- min(prob_ij, 1) 
       }
       
       # Determine (in)existence of edge
@@ -44,7 +48,7 @@ generate_sbm <- function(n, K, Z, B, theta = NULL) {
 #  optional: generate a dynamic DCSBM
 generate_dynamic_sbm <- function(n, K, Z, B, new_B,theta=NULL, T = 10,
                                  persistence=0.1, start_time, 
-                                 end_time=start_time) {
+                                 end_time=start_time, seed = NULL) {
   # n: # of nodes
   # K: # of blocks (communities)
   # Z: Block membership matrix (n x K) 
@@ -60,11 +64,13 @@ generate_dynamic_sbm <- function(n, K, Z, B, new_B,theta=NULL, T = 10,
   A_list <- list()
   # Starting persistence should be 0 until changepoint occurs
   cur_persistence = 0
+  B_t <- B #active B
   
   for (t in 1:T) {
     # Changepoint occurs, persistence changes
     if (t == start_time){
       cur_persistence = persistence
+      B_t <- new_B
     }
     for (i in 1:n) {
       # Update block membership
@@ -77,11 +83,12 @@ generate_dynamic_sbm <- function(n, K, Z, B, new_B,theta=NULL, T = 10,
         theta <- theta * (1 + runif(n, -0.1, 0.1))
       }
     }
-    A <- generate_sbm(n, K, Z, B, theta)
-    A_list[t] = A
+    A <- generate_sbm(n, K, Z, B_t, theta)
+    A_list[t] <- A
     # Changepoint ends, persistence back to 0
     if (t == end_time) {
       cur_persistence = 0
+      B_t <- B
     }
   }
   
