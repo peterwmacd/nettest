@@ -1,0 +1,35 @@
+# Load required libraries
+library(Matrix)
+library(igraph)
+source("../R/SBM.R")
+
+# --- Parameters ---
+n <- 10
+K <- 2
+Z <- matrix(0, nrow = n, ncol = K)
+Z[1:5, 1] <- 1
+Z[6:10, 2] <- 1
+
+B <- matrix(c(0.8, 0.2,
+              0.2, 0.6), nrow = K, byrow = TRUE)
+
+theta <- runif(n, 0.5, 1.5)
+set.seed(42)
+
+# --- Generate Adjacency Matrix ---
+A <- generate_sbm(n, K, Z, B, theta = theta)
+
+# --- Convert to igraph object ---
+g <- graph_from_adjacency_matrix(A, mode = "undirected", diag = FALSE)
+
+# Assign colors by community
+membership <- apply(Z, 1, which.max)
+V(g)$color <- ifelse(membership == 1, "skyblue", "tomato")
+
+# --- Plot ---
+plot(g,
+     vertex.label = 1:n,
+     vertex.size = 25,
+     edge.color = "gray50",
+     layout = layout_with_fr,
+     main = "SBM / DCSBM Graph with 2 Communities")
