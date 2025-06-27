@@ -1,4 +1,4 @@
-devtools::load_all()
+#' @export
 
 # Generates a static Kidney-Egg model as a special case of SBM
 generate_kidney_egg <- function(n, m, p, q, theta = NULL, seed=NULL) {
@@ -34,6 +34,7 @@ generate_kidney_egg <- function(n, m, p, q, theta = NULL, seed=NULL) {
   return(A)
 }
 
+#' @export
 # Generates a controlled dynamic Kidney-Egg model
 generate_dynamic_kidney_egg <- function(n, m, p, q, T = 10,
                                         anomaly_start=5, anomaly_end=7,

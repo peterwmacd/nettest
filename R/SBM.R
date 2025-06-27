@@ -1,4 +1,4 @@
-devtools::load_all()
+#' @export
 
 # This function generates a static Stochastic Block Model
 #  optional: generates a Degree Corrected SBM
@@ -44,6 +44,7 @@ generate_sbm <- function(n, K, Z, B, theta = NULL, seed = NULL) {
 
 # Generates a dynamic SB
 #  optional: generate a dynamic DCSBM
+#' @export
 generate_dynamic_sbm <- function(n, K, Z, B, new_B,theta=NULL, T = 10,
                                  persistence=0.1, start_time,
                                  end_time=start_time, seed = NULL) {

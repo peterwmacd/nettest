@@ -1,6 +1,4 @@
-devtools::load_all()
-
-
+#' @export
 # This function generates a static Stochastic Block Model using Datatables
 #.  to make an edgelist
 #   Note: better for larger datasets
@@ -40,6 +38,7 @@ generate_sbm_dt <- function(n, K, Z, B, theta=NULL) {
   return(edgelist)
 }
 
+#' @export
 # Generates a dynamic SB using a datatable
 #  optional: generate a dynamic DCSBM
 generate_dynamic_sbm_dt <- function(n, K, Z, B, theta=NULL, T = 10,
