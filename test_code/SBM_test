@@ -1,7 +1,4 @@
-# Load required libraries
-library(Matrix)
-library(igraph)
-source("../R/SBM.R")
+devtools::load_all()
 
 # --- Parameters ---
 n <- 10
