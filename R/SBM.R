@@ -73,8 +73,8 @@ generate_dynamic_sbm <- function(n, K, Z, B, new_B,theta=NULL, T = 10,
     }
     for (i in 1:n) {
       # Update block membership
-      if (run_if(1) < persistence) {
-        Z[i, ] <- 0
+      if (runif(1) < persistence) {
+        Z[i, ] <- rep(0, K)
         Z[i, sample(1:K, 1)] <- 1
       }
       # Update Degree parameters (random fluctations)
@@ -83,7 +83,7 @@ generate_dynamic_sbm <- function(n, K, Z, B, new_B,theta=NULL, T = 10,
       }
     }
     A <- generate_sbm(n, K, Z, B_t, theta)
-    A_list[t] <- A
+    A_list[[t]] <- A
     # Changepoint ends, persistence back to 0
     if (t == end_time) {
       cur_persistence = 0
