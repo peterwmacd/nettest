@@ -1,6 +1,7 @@
 devtools::load_all()
 
 # Define parameters
+set.seed(42)
 n <- 50                 # Total number of nodes
 K <- 2                  # Number of communities
 Z <- matrix(0, n, K)    # Membership matrix
@@ -8,8 +9,8 @@ Z[1:(n/2), 1] <- 1
 Z[((n/2)+1):n, 2] <- 1
 
 B <- matrix(c(0.2, 0.1, 0.1, 0.2), nrow=2, byrow=TRUE)  # base connection probabilities
-new_B <- B
-new_B[1, 1] <- 0.3  # local increase in community 1
+epsilon <- 0.1
+new_B <- B + epsilon
 
 theta <- runif(n, 0.8, 1.2)  # degree heterogeneity
 
@@ -28,7 +29,7 @@ dynamic_networks <- generate_dynamic_sbm(
   T = T,
   persistence = persistence,
   start_time = t_star,
-  end_time = T,  # Maintain new_B through end
+  end_time = T,
   theta_fluctuate = FALSE
 )
 # Define label extractor
@@ -61,7 +62,7 @@ layout_pos[node_labels == 2, 1] <- runif(sum(node_labels == 2), min = 0.2, max =
 layout_pos[, 2] <- runif(n, min = -1, max = 1)  # vertical jitter
 
 
-# Plot with captions
+# Shewhart charts
 par(mfrow = c(1, 3), mar = c(1, 1, 4, 1))  # More top margin for caption
 for (i in 1:3) {
   t <- time_points[i]
@@ -76,5 +77,17 @@ for (i in 1:3) {
        main = descriptions[i])
 }
 par(mfrow = c(1, 1))
-plot_simulation_summary(dynamic_networks, node_labels, sim_title = "Simulation 1")
+plot_simulation_summary(dynamic_networks, node_labels, sim_title = "Simulation 2")
 
+# === Compute F1–F9 summaries ===
+F_time_series <- compute_all_F_series(dynamic_networks)
+
+par(mfrow = c(3, 3), mar = c(4, 4, 2, 1))
+for (i in 1:9) {
+  plot(F_time_series[[i]], type = "l",
+       main = paste0("F", i),
+       xlab = "Time", ylab = paste0("F", i))
+  abline(v = t_star, col = "red", lty = 2)
+}
+
+par(mfrow = c(1, 1))

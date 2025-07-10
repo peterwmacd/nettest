@@ -49,7 +49,7 @@ plot_simulation_summary <- function(dynamic_networks, node_labels, sim_title = "
   # Estimate s1 using Louvain clustering
   s1_ts <- sapply(dynamic_networks, function(adj) {
     g <- graph_from_adjacency_matrix(adj, mode = "undirected")
-    cl <- cluster_louvain(g)
+    cl <- cluster_leading_eigen(g)
     sizes <- sizes(cl)
     largest <- which.max(sizes)
     mean(membership(cl) == largest)
