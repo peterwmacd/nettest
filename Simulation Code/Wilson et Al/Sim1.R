@@ -76,3 +76,5 @@ for (i in 1:3) {
        main = descriptions[i])
 }
 par(mfrow = c(1, 1))
+plot_simulation_summary(dynamic_networks, node_labels, sim_title = "Simulation 1")
+
