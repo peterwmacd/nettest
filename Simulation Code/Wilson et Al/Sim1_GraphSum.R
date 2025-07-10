@@ -24,7 +24,8 @@ dynamic_networks <- generate_dynamic_sbm(
   T = T,
   persistence = persistence,
   start_time = t_star,
-  end_time = T
+  end_time = T,
+  theta_fluctuate = FALSE
 )
 
 # === Compute F1–F9 summaries ===

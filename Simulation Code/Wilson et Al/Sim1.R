@@ -28,7 +28,8 @@ dynamic_networks <- generate_dynamic_sbm(
   T = T,
   persistence = persistence,
   start_time = t_star,
-  end_time = T  # Maintain new_B through end
+  end_time = T,  # Maintain new_B through end
+  theta_fluctuate = FALSE
 )
 # Define label extractor
 get_labels_from_Z <- function(Z) {
@@ -44,14 +45,21 @@ time_points <- c(10, 30, 45)
 
 # Description for each time point
 descriptions <- c(
-  "t = 10:\nBefore structural change.\nCommunities are balanced.",
-  "t = 30:\nChange point activated.\nHigher density in community 1 (red).",
-  "t = 45:\nPost-change.\nCommunity 1 remains more internally connected."
+  "t = 10:\nBefore structural change.",
+  "t = 30:\nChange point activated.",
+  "t = 45:\nPost-change."
 )
 
 # Fix layout for consistent visualization
-g_example <- graph_from_adjacency_matrix(dynamic_networks[[1]], mode = "undirected")
-layout_pos <- layout_with_fr(g_example)
+#g_example <- graph_from_adjacency_matrix(dynamic_networks[[1]], mode = "undirected")
+#layout_pos <- layout_with_fr(g_example)
+
+# Manual layout: side-by-side positioning by community
+layout_pos <- matrix(NA, nrow = n, ncol = 2)
+layout_pos[node_labels == 1, 1] <- runif(sum(node_labels == 1), min = -1, max = -0.2)  # Left group
+layout_pos[node_labels == 2, 1] <- runif(sum(node_labels == 2), min = 0.2, max = 1)    # Right group
+layout_pos[, 2] <- runif(n, min = -1, max = 1)  # vertical jitter
+
 
 # Plot with captions
 par(mfrow = c(1, 3), mar = c(1, 1, 4, 1))  # More top margin for caption

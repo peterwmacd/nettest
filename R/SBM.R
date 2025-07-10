@@ -47,7 +47,8 @@ generate_sbm <- function(n, K, Z, B, theta = NULL, seed = NULL) {
 #' @export
 generate_dynamic_sbm <- function(n, K, Z, B, new_B,theta=NULL, T = 10,
                                  persistence=0.1, start_time,
-                                 end_time=start_time, seed = NULL) {
+                                 end_time=start_time,
+                                 theta_fluctuate=TRUE, seed = NULL) {
   # n: # of nodes
   # K: # of blocks (communities)
   # Z: Block membership matrix (n x K)
@@ -58,6 +59,8 @@ generate_dynamic_sbm <- function(n, K, Z, B, new_B,theta=NULL, T = 10,
   # persistence: probability of block change for a node
   # start_time: starting timestep of the changepoint
   # end_time: last timestep of the changepoint
+  # theta_fluctuate: determines if theta should change over time
+  # seed: for reproducibility
 
   # List of adjacency matrices at each time step
   A_list <- list()
@@ -78,7 +81,7 @@ generate_dynamic_sbm <- function(n, K, Z, B, new_B,theta=NULL, T = 10,
         Z[i, sample(1:K, 1)] <- 1
       }
       # Update Degree parameters (random fluctations)
-      if (!is.null(theta)) {
+      if (!is.null(theta_fluctuate) && theta_fluctuate) {
         theta <- theta * (1 + runif(n, -0.1, 0.1))
       }
     }
