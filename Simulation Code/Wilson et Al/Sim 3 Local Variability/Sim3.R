@@ -25,7 +25,7 @@ dynamic_networks <- generate_dynamic_sbm(
   K = K,
   Z = Z,
   B = B,
-  new_B = new_B,
+  new_B = B,
   theta = theta,
   T = T,
   persistence = persistence,
