@@ -48,7 +48,10 @@ generate_sbm <- function(n, K, Z, B, theta = NULL, seed = NULL) {
 generate_dynamic_sbm <- function(n, K, Z, B, new_B,theta=NULL, T = 10,
                                  persistence=0.1, start_time,
                                  end_time=start_time,
-                                 theta_fluctuate=TRUE, seed = NULL) {
+                                 theta_fluctuate=TRUE,
+                                 theta_spread_change = NULL,
+                                 theta_spread_blocks = NULL,
+                                 seed = NULL) {
   # n: # of nodes
   # K: # of blocks (communities)
   # Z: Block membership matrix (n x K)
@@ -60,6 +63,8 @@ generate_dynamic_sbm <- function(n, K, Z, B, new_B,theta=NULL, T = 10,
   # start_time: starting timestep of the changepoint
   # end_time: last timestep of the changepoint
   # theta_fluctuate: determines if theta should change over time
+  # theta_spread_change: Optional value to widen theta range during changepoint
+  # theta_spread_blocks: Optional vector of community indices to apply spread change to
   # seed: for reproducibility
 
   # List of adjacency matrices at each time step
@@ -67,6 +72,11 @@ generate_dynamic_sbm <- function(n, K, Z, B, new_B,theta=NULL, T = 10,
   # Starting persistence should be 0 until changepoint occurs
   cur_persistence = 0
   B_t <- B #active B
+
+  if (!is.null(theta) && !is.null(theta_spread_change)) {
+    base_theta_min <-min(theta)
+    base_theta_max <- max(theta)
+  }
 
   for (t in 1:T) {
     # Changepoint occurs, persistence changes
@@ -84,6 +94,21 @@ generate_dynamic_sbm <- function(n, K, Z, B, new_B,theta=NULL, T = 10,
       if (!is.null(theta_fluctuate) && theta_fluctuate) {
         theta <- theta * (1 + runif(n, -0.1, 0.1))
       }
+
+      if (!is.null(theta) &&
+          !is.null(theta_spread_change) &&
+          !is.null(theta_spread_blocks)) {
+        if (t >= start_time && t <= end_time) {
+          node_labels <- apply(Z, 1, function(row) which(row == 1))
+          for (r in theta_spread_blocks) {
+            ids <- which(node_labels == r)
+            theta[ids] <- runif(length(ids),
+                                min = base_theta_min - theta_spread_change,
+                                max = base_theta_max + theta_spread_change)
+          }
+        }
+      }
+
     }
     A <- generate_sbm(n, K, Z, B_t, theta)
     A_list[[t]] <- A
