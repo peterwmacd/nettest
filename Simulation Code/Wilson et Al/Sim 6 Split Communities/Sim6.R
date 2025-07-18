@@ -16,24 +16,26 @@ T <- 50                # Total time steps
 t_star <- 30           # Start of structural change
 persistence <- 0       # No label change in this simulation
 
-sim5_output <- generate_dynamic_sbm(
+
+sim_output <- generate_dynamic_sbm(
   n = n,
   K = K,
   Z = Z,
   B = B,
-  new_B = B,
+  new_B = NULL,
   theta = theta,
   T = T,
   persistence = persistence,
   start_time = t_star,
   end_time = T,
-  theta_fluctuate = FALSE,
-  merge_communities = TRUE,
-  merge_time = t_star
+  split_community = TRUE,
+  split_time = t_star,
+  split_within = 0.25,
+  split_between = 0.05
 )
 
-dynamic_networks <- sim5_output$adj_list
-Z_list <- sim5_output$Z_list
+dynamic_networks <- sim_output$adj_list
+Z_list <- sim_output$Z_list
 
 # Define label extractor
 get_labels_from_Z <- function(Z) {
@@ -57,8 +59,8 @@ descriptions <- c(
 # Manual layout: side-by-side positioning by community
 initial_labels <- get_labels_from_Z(Z)
 layout_pos <- matrix(NA, nrow = n, ncol = 2)
-layout_pos[node_labels == 1, 1] <- runif(sum(node_labels == 1), min = -1, max = -0.2)  # Left group
-layout_pos[node_labels == 2, 1] <- runif(sum(node_labels == 2), min = 0.2, max = 1)    # Right group
+layout_pos[initial_labels == 1, 1] <- runif(sum(initial_labels == 1), min = -1, max = -0.2)
+layout_pos[initial_labels == 2, 1] <- runif(sum(initial_labels == 2), min = 0.2, max = 1)
 layout_pos[, 2] <- runif(n, min = -1, max = 1)  # vertical jitter
 
 
@@ -68,9 +70,9 @@ for (i in 1:3) {
   t <- time_points[i]
   g_t <- graph_from_adjacency_matrix(dynamic_networks[[t]], mode = "undirected")
   Z_t <- Z_list[[t]]
-  node_labels <- get_labels_from_Z(Z_t)
+  node_labels <- max.col((Z_t))
 
-  color_map <- c("skyblue", "tomato", "gray")
+  color_map <- c("skyblue", "tomato", "gold", "gray")
   community_colors <- color_map[pmin(node_labels, length(color_map))]
 
   plot(g_t,
@@ -85,7 +87,7 @@ par(mfrow = c(1, 1))
 
 node_labels <- initial_labels
 
-plot_simulation_summary(dynamic_networks, node_labels, sim_title = "Simulation 5")
+plot_simulation_summary(dynamic_networks, node_labels, sim_title = "Simulation 6")
 
 # === Compute F1–F9 summaries ===
 F_time_series <- compute_all_F_series(dynamic_networks)

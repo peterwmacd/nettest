@@ -53,6 +53,10 @@ generate_dynamic_sbm <- function(n, K, Z, B, new_B,theta=NULL, T = 10,
                                  theta_spread_blocks = NULL,
                                  merge_communities = FALSE,
                                  merge_time = NULL,
+                                 split_community = FALSE,
+                                 split_time = NULL,
+                                 split_within = 0.2,
+                                 split_between = 0.15,
                                  seed = NULL) {
   # n: # of nodes
   # K: # of blocks (communities)
@@ -69,6 +73,10 @@ generate_dynamic_sbm <- function(n, K, Z, B, new_B,theta=NULL, T = 10,
   # theta_spread_blocks: Optional vector of community indices to apply spread change to
   # merge_communities: determines whether to merge communities
   # merge_time: Time step of community merge
+  # split_community: determines whether to split a community
+  # split_time: Time step of community split
+  # split_within: controls within-community probability
+  # split_between: controls between-community probability
   # seed: for reproducibility
 
   # List of adjacency matrices at each time step
@@ -122,6 +130,25 @@ generate_dynamic_sbm <- function(n, K, Z, B, new_B,theta=NULL, T = 10,
       K <- 1
       Z <- matrix(1, nrow=n, ncol = 1)
       B_t <- matrix(mean(B_t), 1, 1)
+    }
+
+    if (!is.null(split_time) && t == split_time && split_community) {
+      message(sprintf("Splitting community 1 at time t = %d", t))
+      idx_comm1 <- which(apply(Z, 1, function(row) which(row == 1)) == 1)
+      split_A <- idx_comm1[1:floor(length(idx_comm1)/2)]
+      split_B <- setdiff(idx_comm1, split_A)
+
+      Z_new <- matrix(0, n, K + 1)
+      Z_new[, 2:(K+1)] <- Z  # shift existing groups to 2 and 3
+      Z_new[split_A, 1] <- 1
+      Z_new[split_B, 2] <- 1
+
+      Z <- Z_new
+      K <- K + 1
+
+      # Expand B matrix
+      B_t <- matrix(split_between, K, K)
+      diag(B_t) <- split_within
     }
 
     A <- generate_sbm(n, K, Z, B_t, theta)
