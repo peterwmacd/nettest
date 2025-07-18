@@ -47,7 +47,7 @@ plot_simulation_summary <- function(dynamic_networks, node_labels, sim_title = "
   block_prob_ts <- t(sapply(dynamic_networks, estimate_block_probs, labels = node_labels))
 
   # Estimate s1 using Louvain clustering
-  s1_ts <- sapply(dynamic_networks, function(adj) {
+  pi_max_ts <- sapply(dynamic_networks, function(adj) {
     g <- graph_from_adjacency_matrix(adj, mode = "undirected")
     cl <- cluster_leading_eigen(g)
     sizes <- sizes(cl)
@@ -61,14 +61,14 @@ plot_simulation_summary <- function(dynamic_networks, node_labels, sim_title = "
   p22_ts <- block_prob_ts[, "p22"]
 
   # Compute control limits
-  s1_lim  <- compute_control_limits(s1_ts, baseline_window)
+  pi_max_lim  <- compute_control_limits(pi_max_ts, baseline_window)
   p11_lim <- compute_control_limits(p11_ts, baseline_window)
   p12_lim <- compute_control_limits(p12_ts, baseline_window)
   p22_lim <- compute_control_limits(p22_ts, baseline_window)
 
   # Plot 2x2
   par(mfrow = c(2, 2), mar = c(4, 4, 2, 1))
-  draw_shewhart_plot(s1_ts,  s1_lim,  expression(s[1]))
+  draw_shewhart_plot(pi_max_ts,  pi_max_lim,  expression(pi[max]))
   draw_shewhart_plot(p11_ts, p11_lim, expression(hat(P)[11]))
   draw_shewhart_plot(p12_ts, p12_lim, expression(hat(P)[12]))
   draw_shewhart_plot(p22_ts, p22_lim, expression(hat(P)[22]))
