@@ -133,7 +133,6 @@ generate_dynamic_sbm <- function(n, K, Z, B, new_B,theta=NULL, T = 10,
     }
 
     if (!is.null(split_time) && t == split_time && split_community) {
-      message(sprintf("Splitting community 1 at time t = %d", t))
       idx_comm1 <- which(apply(Z, 1, function(row) which(row == 1)) == 1)
       split_A <- idx_comm1[1:floor(length(idx_comm1)/2)]
       split_B <- setdiff(idx_comm1, split_A)
