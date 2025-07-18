@@ -9,8 +9,6 @@ Z[1:(n/2), 1] <- 1
 Z[((n/2)+1):n, 2] <- 1
 
 B <- matrix(c(0.2, 0.1, 0.1, 0.2), nrow=2, byrow=TRUE)  # base connection probabilities
-epsilon <- 0.1
-new_B <- B + epsilon
 
 theta <- runif(n, 0.8, 1.2)  # degree heterogeneity
 
@@ -18,21 +16,25 @@ T <- 50                # Total time steps
 t_star <- 30           # Start of structural change
 persistence <- 0       # No label change in this simulation
 
+theta_spread_change = 0.25
+theta_spread_blocks = c(1, 2)
+
 # Generate dynamic SBM using your function
 sim_output <- generate_dynamic_sbm(
   n = n,
   K = K,
   Z = Z,
   B = B,
-  new_B = new_B,
+  new_B = B,
   theta = theta,
   T = T,
   persistence = persistence,
   start_time = t_star,
   end_time = T,
-  theta_fluctuate = FALSE
+  theta_fluctuate = FALSE,
+  theta_spread_change = theta_spread_change,
+  theta_spread_blocks = theta_spread_blocks
 )
-
 dynamic_networks <- sim_output$adj_list
 
 # Define label extractor
@@ -80,11 +82,10 @@ for (i in 1:3) {
        main = descriptions[i])
 }
 par(mfrow = c(1, 1))
-plot_simulation_summary(dynamic_networks, node_labels, sim_title = "Simulation 2")
+plot_simulation_summary(dynamic_networks, node_labels, sim_title = "Simulation 4")
 
 # === Compute F1–F9 summaries ===
 F_time_series <- compute_all_F_series(dynamic_networks)
 
 plot_F_summary_with_control_bands(F_time_series)
-
 par(mfrow = c(1, 1))

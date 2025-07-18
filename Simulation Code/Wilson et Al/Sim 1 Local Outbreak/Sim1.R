@@ -18,7 +18,7 @@ t_star <- 30           # Start of structural change
 persistence <- 0       # No label change in this simulation
 
 # Generate dynamic SBM using your function
-dynamic_networks <- generate_dynamic_sbm(
+sim_output <- generate_dynamic_sbm(
   n = n,
   K = K,
   Z = Z,
@@ -31,6 +31,9 @@ dynamic_networks <- generate_dynamic_sbm(
   end_time = T,  # Maintain new_B through end
   theta_fluctuate = FALSE
 )
+
+dynamic_networks <- sim_output$adj_list
+
 # Define label extractor
 get_labels_from_Z <- function(Z) {
   apply(Z, 1, function(row) which(row == 1))

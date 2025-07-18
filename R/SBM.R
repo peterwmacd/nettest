@@ -42,7 +42,7 @@ generate_sbm <- function(n, K, Z, B, theta = NULL, seed = NULL) {
   return(A)
 }
 
-# Generates a dynamic SB
+# Generates a dynamic SBM
 #  optional: generate a dynamic DCSBM
 #' @export
 generate_dynamic_sbm <- function(n, K, Z, B, new_B,theta=NULL, T = 10,
@@ -51,6 +51,8 @@ generate_dynamic_sbm <- function(n, K, Z, B, new_B,theta=NULL, T = 10,
                                  theta_fluctuate=TRUE,
                                  theta_spread_change = NULL,
                                  theta_spread_blocks = NULL,
+                                 merge_communities = FALSE,
+                                 merge_time = NULL,
                                  seed = NULL) {
   # n: # of nodes
   # K: # of blocks (communities)
@@ -65,13 +67,18 @@ generate_dynamic_sbm <- function(n, K, Z, B, new_B,theta=NULL, T = 10,
   # theta_fluctuate: determines if theta should change over time
   # theta_spread_change: Optional value to widen theta range during changepoint
   # theta_spread_blocks: Optional vector of community indices to apply spread change to
+  # merge_communities: determines whether to merge communities
+  # merge_time: Time step of community merge
   # seed: for reproducibility
 
   # List of adjacency matrices at each time step
   A_list <- list()
+  # List of membership matrices over time
+  Z_list <- list()
   # Starting persistence should be 0 until changepoint occurs
   cur_persistence = 0
   B_t <- B #active B
+  cur_K <- K
 
   if (!is.null(theta) && !is.null(theta_spread_change)) {
     base_theta_min <-min(theta)
@@ -90,28 +97,37 @@ generate_dynamic_sbm <- function(n, K, Z, B, new_B,theta=NULL, T = 10,
         Z[i, ] <- rep(0, K)
         Z[i, sample(1:K, 1)] <- 1
       }
-      # Update Degree parameters (random fluctations)
-      if (!is.null(theta_fluctuate) && theta_fluctuate) {
-        theta <- theta * (1 + runif(n, -0.1, 0.1))
-      }
+    }
+    # Update Degree parameters (random fluctations)
+    if (!is.null(theta_fluctuate) && theta_fluctuate) {
+      theta <- theta * (1 + runif(n, -0.1, 0.1))
+    }
 
-      if (!is.null(theta) &&
-          !is.null(theta_spread_change) &&
-          !is.null(theta_spread_blocks)) {
-        if (t >= start_time && t <= end_time) {
-          node_labels <- apply(Z, 1, function(row) which(row == 1))
-          for (r in theta_spread_blocks) {
-            ids <- which(node_labels == r)
-            theta[ids] <- runif(length(ids),
-                                min = base_theta_min - theta_spread_change,
-                                max = base_theta_max + theta_spread_change)
-          }
+    if (!is.null(theta) &&
+        !is.null(theta_spread_change) &&
+        !is.null(theta_spread_blocks)) {
+      if (t >= start_time && t <= end_time) {
+        node_labels <- apply(Z, 1, function(row) which(row == 1))
+        for (r in theta_spread_blocks) {
+          ids <- which(node_labels == r)
+          theta[ids] <- runif(length(ids),
+                              min = base_theta_min - theta_spread_change,
+                              max = base_theta_max + theta_spread_change)
         }
       }
-
     }
+
+    # Merge communities at changepoint
+    if (!is.null(merge_time) && t == merge_time && merge_communities) {
+      K <- 1
+      Z <- matrix(1, nrow=n, ncol = 1)
+      B_t <- matrix(mean(B_t), 1, 1)
+    }
+
     A <- generate_sbm(n, K, Z, B_t, theta)
     A_list[[t]] <- A
+    Z_list[[t]] <- matrix(Z, nrow = n)
+
     # Changepoint ends, persistence back to 0
     if (t == end_time) {
       cur_persistence = 0
@@ -119,5 +135,5 @@ generate_dynamic_sbm <- function(n, K, Z, B, new_B,theta=NULL, T = 10,
     }
   }
 
-  return(A_list)
+  return(list(adj_list = A_list, Z_list = Z_list))
 }

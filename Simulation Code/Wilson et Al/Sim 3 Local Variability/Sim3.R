@@ -20,7 +20,7 @@ theta_spread_change = 0.25
 theta_spread_blocks = c(1)
 
 # Generate dynamic SBM using your function
-dynamic_networks <- generate_dynamic_sbm(
+sim_output <- generate_dynamic_sbm(
   n = n,
   K = K,
   Z = Z,
@@ -35,6 +35,8 @@ dynamic_networks <- generate_dynamic_sbm(
   theta_spread_change = theta_spread_change,
   theta_spread_blocks = theta_spread_blocks
 )
+dynamic_networks <- sim_output$adj_list
+
 # Define label extractor
 get_labels_from_Z <- function(Z) {
   apply(Z, 1, function(row) which(row == 1))
