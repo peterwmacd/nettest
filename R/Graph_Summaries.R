@@ -151,3 +151,40 @@ compute_all_F_series <- function(adj_list) {
   return(as.data.frame(F_matrix))
 }
 
+#' Plot F1–F9 with Shewhart-style control bands
+#'
+#' @param F_time_series A data frame with 9 columns named F1 to F9, each a time series
+#' @param baseline_window Vector of indices (default 1:25) used to estimate baseline control limits
+#' @param sim_title Optional: title above the 3x3 grid
+#'
+#' @return None. Displays a 3×3 plot of F-statistics with control bands
+#' @export
+plot_F_summary_with_control_bands <- function(F_time_series, baseline_window = 1:25, sim_title = "") {
+  stopifnot(ncol(F_time_series) == 9)
+  par(mfrow = c(3, 3), mar = c(4, 4, 2, 1))
+
+  for (j in 1:9) {
+    series <- F_time_series[[j]]
+    name <- names(F_time_series)[j]
+
+    baseline <- series[baseline_window]
+    m <- mean(baseline)
+    s <- sd(baseline)
+
+    UCL <- m + 3 * s
+    LCL <- m - 3 * s
+    y_range <- range(c(series, UCL, LCL), na.rm = TRUE)
+
+    plot(series, type = "l",
+         ylim = y_range,
+         ylab = "Value", xlab = "Time",
+         main = name)
+    abline(h = m, col = "blue")
+    abline(h = c(UCL, LCL), col = "red", lty = 2)
+  }
+
+  mtext(sim_title, side = 3, outer = TRUE, line = -1.5, font = 2, cex = 1.4)
+  par(mfrow = c(1, 1))
+}
+
+

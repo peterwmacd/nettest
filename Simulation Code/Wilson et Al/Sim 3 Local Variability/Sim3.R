@@ -85,12 +85,5 @@ plot_simulation_summary(dynamic_networks, node_labels, sim_title = "Simulation 3
 # === Compute F1–F9 summaries ===
 F_time_series <- compute_all_F_series(dynamic_networks)
 
-par(mfrow = c(3, 3), mar = c(4, 4, 2, 1))
-for (i in 1:9) {
-  plot(F_time_series[[i]], type = "l",
-       main = paste0("F", i),
-       xlab = "Time", ylab = paste0("F", i))
-  abline(v = t_star, col = "red", lty = 2)
-}
-
+plot_F_summary_with_control_bands(F_time_series)
 par(mfrow = c(1, 1))
