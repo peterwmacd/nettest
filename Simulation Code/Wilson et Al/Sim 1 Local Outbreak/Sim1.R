@@ -79,7 +79,10 @@ for (i in 1:3) {
        main = descriptions[i])
 }
 par(mfrow = c(1, 1))
-plot_simulation_summary(dynamic_networks, node_labels, sim_title = "Simulation 1")
+# Wrap true block memberships into a Z_list
+Z_list <- replicate(T, Z, simplify = FALSE)
+
+plot_simulation_summary(dynamic_networks, Z_list, node_labels, sim_title = "Simulation 1")
 
 # === Compute F1–F9 summaries ===
 F_time_series <- compute_all_F_series(dynamic_networks)
@@ -88,3 +91,13 @@ plot_F_summary_with_control_bands(F_time_series)
 
 par(mfrow = c(1, 1))
 
+edge_counts <- sapply(dynamic_networks, function(A) sum(A) / 2)
+plot(edge_counts, type = "h", main = "Edge Count Over Time")
+abline(v = 30, col = "red", lty = 2)
+
+
+lad_results <- run_lad_analysis(
+  adjacency_list = dynamic_networks,
+  changepoints = t_star,  # Known structural change
+  title = "LAD - Simulation 1"
+)

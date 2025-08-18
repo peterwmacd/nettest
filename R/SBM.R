@@ -52,9 +52,7 @@ generate_dynamic_sbm <- function(n, K, Z, B, new_B,theta=NULL, T = 10,
                                  theta_spread_change = NULL,
                                  theta_spread_blocks = NULL,
                                  merge_communities = FALSE,
-                                 merge_time = NULL,
                                  split_community = FALSE,
-                                 split_time = NULL,
                                  split_within = 0.2,
                                  split_between = 0.15,
                                  seed = NULL) {
@@ -72,9 +70,7 @@ generate_dynamic_sbm <- function(n, K, Z, B, new_B,theta=NULL, T = 10,
   # theta_spread_change: Optional value to widen theta range during changepoint
   # theta_spread_blocks: Optional vector of community indices to apply spread change to
   # merge_communities: determines whether to merge communities
-  # merge_time: Time step of community merge
   # split_community: determines whether to split a community
-  # split_time: Time step of community split
   # split_within: controls within-community probability
   # split_between: controls between-community probability
   # seed: for reproducibility
@@ -94,11 +90,6 @@ generate_dynamic_sbm <- function(n, K, Z, B, new_B,theta=NULL, T = 10,
   }
 
   for (t in 1:T) {
-    # Changepoint occurs, persistence changes
-    if (t == start_time){
-      cur_persistence = persistence
-      B_t <- new_B
-    }
     for (i in 1:n) {
       # Update block membership
       if (runif(1) < persistence) {
@@ -106,49 +97,56 @@ generate_dynamic_sbm <- function(n, K, Z, B, new_B,theta=NULL, T = 10,
         Z[i, sample(1:K, 1)] <- 1
       }
     }
+
     # Update Degree parameters (random fluctations)
-    if (!is.null(theta_fluctuate) && theta_fluctuate) {
+    if (!is.null(theta_fluctuate)) {
       theta <- theta * (1 + runif(n, -0.1, 0.1))
     }
 
     if (!is.null(theta) &&
         !is.null(theta_spread_change) &&
-        !is.null(theta_spread_blocks)) {
-      if (t >= start_time && t <= end_time) {
-        node_labels <- apply(Z, 1, function(row) which(row == 1))
-        for (r in theta_spread_blocks) {
-          ids <- which(node_labels == r)
-          theta[ids] <- runif(length(ids),
-                              min = base_theta_min - theta_spread_change,
-                              max = base_theta_max + theta_spread_change)
-        }
+        !is.null(theta_spread_blocks) &&
+        t >= start_time && t <= end_time) {
+      node_labels <- apply(Z, 1, function(row) which(row == 1))
+      for (r in theta_spread_blocks) {
+        ids <- which(node_labels == r)
+        theta[ids] <- runif(length(ids),
+                            min = base_theta_min - theta_spread_change,
+                            max = base_theta_max + theta_spread_change)
       }
     }
 
-    # Merge communities at changepoint
-    if (!is.null(merge_time) && t == merge_time && merge_communities) {
-      K <- 1
-      Z <- matrix(1, nrow=n, ncol = 1)
-      B_t <- matrix(mean(B_t), 1, 1)
+    if (t == start_time) {
+      # Changepoint occurs, persistence changes
+      cur_persistence = persistence
+      B_t <- new_B
+
+      # Merge?
+      if (merge_communities) {
+        K <- 1
+        Z <- matrix(1, nrow=n, ncol = 1)
+        B_t <- matrix(mean(B_t), 1, 1)
+      }
+      # Split?
+      if (split_community) {
+        idx_comm1 <- which(apply(Z, 1, function(row) which(row == 1)) == 1)
+        split_A <- idx_comm1[1:floor(length(idx_comm1)/2)]
+        split_B <- setdiff(idx_comm1, split_A)
+
+        Z_new <- matrix(0, n, K + 1)
+        Z_new[, 2:(K+1)] <- Z  # shift existing groups to 2 and 3
+        Z_new[split_A, 1] <- 1
+        Z_new[split_B, 2] <- 1
+
+        Z <- Z_new
+        K <- K + 1
+
+        # Expand B matrix
+        B_t <- matrix(split_between, K, K)
+        diag(B_t) <- split_within
+      }
     }
 
-    if (!is.null(split_time) && t == split_time && split_community) {
-      idx_comm1 <- which(apply(Z, 1, function(row) which(row == 1)) == 1)
-      split_A <- idx_comm1[1:floor(length(idx_comm1)/2)]
-      split_B <- setdiff(idx_comm1, split_A)
-
-      Z_new <- matrix(0, n, K + 1)
-      Z_new[, 2:(K+1)] <- Z  # shift existing groups to 2 and 3
-      Z_new[split_A, 1] <- 1
-      Z_new[split_B, 2] <- 1
-
-      Z <- Z_new
-      K <- K + 1
-
-      # Expand B matrix
-      B_t <- matrix(split_between, K, K)
-      diag(B_t) <- split_within
-    }
 
     A <- generate_sbm(n, K, Z, B_t, theta)
     A_list[[t]] <- A

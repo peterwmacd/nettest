@@ -29,7 +29,6 @@ sim5_output <- generate_dynamic_sbm(
   end_time = T,
   theta_fluctuate = FALSE,
   merge_communities = TRUE,
-  merge_time = t_star
 )
 
 dynamic_networks <- sim5_output$adj_list
@@ -85,10 +84,17 @@ par(mfrow = c(1, 1))
 
 node_labels <- initial_labels
 
-plot_simulation_summary(dynamic_networks, node_labels, sim_title = "Simulation 5")
+Z_list <- sim_output$Z_list
+
+plot_simulation_summary(dynamic_networks, Z_list, node_labels, sim_title = "Simulation 5")
 
 # === Compute F1–F9 summaries ===
 F_time_series <- compute_all_F_series(dynamic_networks)
 
 plot_F_summary_with_control_bands(F_time_series)
 par(mfrow = c(1, 1))
+lad_results <- run_lad_analysis(
+  adjacency_list = dynamic_networks,
+  changepoints = t_star,  # Known structural change
+  title = "LAD - Simulation 5"
+)

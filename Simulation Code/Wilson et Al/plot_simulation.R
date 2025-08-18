@@ -7,7 +7,7 @@
 #'
 #' @return A 2x2 base R plot panel with Shewhart-style bounds and visible control limits
 #' @export
-plot_simulation_summary <- function(dynamic_networks, node_labels, sim_title = "Simulation Summary", baseline_window = 1:25) {
+plot_simulation_summary <- function(dynamic_networks, Z_list, node_labels, sim_title = "Simulation Summary", baseline_window = 1:25) {
 
   estimate_block_probs <- function(adj, labels) {
     ids_1 <- which(labels == 1)
@@ -43,17 +43,18 @@ plot_simulation_summary <- function(dynamic_networks, node_labels, sim_title = "
     if (!is.na(limits["upper"])) abline(h = limits["upper"], col = "red", lty = 2)
   }
 
+  # Compute π_max using Louvain clustering
+  pi_max_clustered <- sapply(dynamic_networks, function(adj) {
+    g <- graph_from_adjacency_matrix(adj, mode = "undirected")
+    clustering <- cluster_louvain(g)
+    memb <- membership(clustering)
+
+    max(table(memb)) / length(memb)
+  })
+
+
   # Estimate connection probabilities
   block_prob_ts <- t(sapply(dynamic_networks, estimate_block_probs, labels = node_labels))
-
-  # Estimate s1 using Louvain clustering
-  pi_max_ts <- sapply(dynamic_networks, function(adj) {
-    g <- graph_from_adjacency_matrix(adj, mode = "undirected")
-    cl <- cluster_leading_eigen(g)
-    sizes <- sizes(cl)
-    largest <- which.max(sizes)
-    mean(membership(cl) == largest)
-  })
 
   # Extract individual series
   p11_ts <- block_prob_ts[, "p11"]
@@ -61,20 +62,19 @@ plot_simulation_summary <- function(dynamic_networks, node_labels, sim_title = "
   p22_ts <- block_prob_ts[, "p22"]
 
   # Compute control limits
-  pi_max_lim  <- compute_control_limits(pi_max_ts, baseline_window)
+  pi_max_lim  <- compute_control_limits(pi_max_clustered, baseline_window)
   p11_lim <- compute_control_limits(p11_ts, baseline_window)
   p12_lim <- compute_control_limits(p12_ts, baseline_window)
   p22_lim <- compute_control_limits(p22_ts, baseline_window)
 
   # Plot 2x2
   par(mfrow = c(2, 2), mar = c(4, 4, 2, 1))
-  draw_shewhart_plot(pi_max_ts,  pi_max_lim,  expression(pi[max]))
+  draw_shewhart_plot(pi_max_clustered,  pi_max_lim,  expression(pi[max]))
   draw_shewhart_plot(p11_ts, p11_lim, expression(hat(P)[11]))
   draw_shewhart_plot(p12_ts, p12_lim, expression(hat(P)[12]))
   draw_shewhart_plot(p22_ts, p22_lim, expression(hat(P)[22]))
   mtext(sim_title, side = 3, outer = TRUE, line = -1.5, cex = 1.4, font = 2)
   par(mfrow = c(1, 1))
 }
-
 
 

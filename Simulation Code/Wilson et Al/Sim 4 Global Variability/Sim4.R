@@ -82,10 +82,18 @@ for (i in 1:3) {
        main = descriptions[i])
 }
 par(mfrow = c(1, 1))
-plot_simulation_summary(dynamic_networks, node_labels, sim_title = "Simulation 4")
+Z_list <- sim_output$Z_list
+
+plot_simulation_summary(dynamic_networks, Z_list, node_labels, sim_title = "Simulation 4")
 
 # === Compute F1–F9 summaries ===
 F_time_series <- compute_all_F_series(dynamic_networks)
 
 plot_F_summary_with_control_bands(F_time_series)
 par(mfrow = c(1, 1))
+
+lad_results <- run_lad_analysis(
+  adjacency_list = dynamic_networks,
+  changepoints = t_star,  # Known structural change
+  title = "LAD - Simulation 4"
+)
