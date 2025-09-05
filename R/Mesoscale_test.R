@@ -1,5 +1,64 @@
 # mesoscale network testing
 
+# helper to convert different formats of hypothesis and masked sets
+# of node pairs to unified 2-column matrix of (i,j)'s
+# accounts for directedness and self loops in original network data
+hyp_set_to_indices <- function(hyp_set,masked_set,directed,self_loops){
+  # does the test set specify a rectangle, if so expand to general indices
+  if(is.matrix(hyp_set)){
+    hyp_indices <- hyp_set
+  }
+  else{
+    # else list of rectangles
+    if(is.list(hyp_set[[1]])){
+      hyp_indices <- Reduce(rbind,lapply(hyp_set,function(x){as.matrix(expand.grid(x))}))
+    }
+    else{
+      # else one rectangle
+      hyp_indices <- as.matrix(expand.grid(hyp_set))
+    }
+  }
+  # does the masked set specify a rectangle, if so expand to general indices
+  if(!is.null(masked_set)){
+    if(is.matrix(masked_set)){
+      masked_indices <- masked_set
+    }
+    else{
+      # else list of rectangles
+      if(is.list(masked_set[[1]])){
+        masked_indices <- Reduce(rbind,lapply(masked_set,function(x){as.matrix(expand.grid(x))}))
+      }
+      else{
+        # else one rectangle
+        masked_indices <- as.matrix(expand.grid(masked_set))
+        if(nrow(masked_indices)==0){
+          masked_indices <- NULL
+        }
+      }
+    }
+  }
+  else{
+    masked_indices <- NULL
+  }
+  # account for self loops in masked set and hypothesis set (add diagonal to masked set)
+  if(!self_loops){
+    hyp_sl <- hyp_indices[,1]==hyp_indices[,2]
+    if(sum(hyp_sl) > 0){
+      masked_indices <- rbind(masked_indices,hyp_indices[hyp_sl,])
+      hyp_indices <- hyp_indices[!hyp_sl,]
+    }
+  }
+  # account for symmetry in masked set and hypothesis set
+  if(!directed){
+    # augment hypothesis indices and masked indices to include diagonal mirrors
+    hyp_indices <- unique(rbind(hyp_indices,hyp_indices[,c(2,1)]))
+    if(!is.null(masked_indices)){
+      masked_indices <- unique(rbind(masked_indices,masked_indices[,c(2,1)]))
+    }
+  }
+  return(list(hyp_indices=hyp_indices,masked_indices=masked_indices))
+}
+
 # binary_meso helper for logistic model
 # takes the data, hyp_set, projections, variance option
 # returns the pvalue and rejection decision
@@ -277,54 +336,10 @@ Mesoscale_test <- function(A,B,
 ){
   # parameter checking
   # ...
-  # does the test set specify a rectangle, if so expand to general indices
-  if(is.matrix(hyp_set)){
-    hyp_indices <- hyp_set
-  }
-  else{
-    if(is.list(hyp_set[[1]])){
-      hyp_indices <- Reduce(rbind,lapply(hyp_set,function(x){as.matrix(expand.grid(x))}))
-    }
-    else{
-      hyp_indices <- as.matrix(expand.grid(hyp_set))
-    }
-  }
-  # does the masked set specify a rectangle, if so expand to general indices
-  if(!is.null(masked_set)){
-    if(is.matrix(masked_set)){
-      masked_indices <- masked_set
-    }
-    else{
-      if(is.list(masked_set[[1]])){
-        masked_indices <- Reduce(rbind,lapply(masked_set,function(x){as.matrix(expand.grid(x))}))
-      }
-      else{
-        masked_indices <- as.matrix(expand.grid(masked_set))
-        if(nrow(masked_indices)==0){
-          masked_indices <- NULL
-        }
-      }
-    }
-  }
-  else{
-    masked_indices <- NULL
-  }
-  # account for self loops in masked set and hypothesis set
-  if(!self_loops){
-    hyp_sl <- hyp_indices[,1]==hyp_indices[,2]
-    if(sum(hyp_sl) > 0){
-      masked_indices <- rbind(masked_indices,hyp_indices[hyp_sl,])
-      hyp_indices <- hyp_indices[!hyp_sl,]
-    }
-  }
-  # account for symmetry in masked set and hypothesis set
-  if(!directed){
-    # augment hypothesis indices and masked indices to include diagonal mirrors
-    hyp_indices <- unique(rbind(hyp_indices,hyp_indices[,c(2,1)]))
-    if(!is.null(masked_indices)){
-      masked_indices <- unique(rbind(masked_indices,masked_indices[,c(2,1)]))
-    }
-  }
+  # convert hypothesis set and masked set of node pairs to two-column matrix format
+  nodepair_indices <- hyp_set_to_indices(hyp_set,masked_set,directed,self_loops)
+  hyp_indices <- nodepair_indices$hyp_indices
+  masked_indices <- nodepair_indices$masked_indices
   # dimensions
   m1 <- length(A)
   m2 <- length(B)

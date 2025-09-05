@@ -4,6 +4,19 @@
 # n, m, d, dispersion (overdisp for binary, sigma for gaussian, defaults to 1),
 # row_indices, col_indices, signal, directed, gaussian/binary toggle, distance/IP toggle
 
+# helper: convert array to list of aligned matrices
+array_to_list <- function(A){
+  m <- dim(A)[3]
+  lapply(1:m,function(kk){A[,,kk]})
+}
+
+# helper convert list of aligned matrices to 3d array
+list_to_array <- function(B){
+  n <- nrow(B[[1]])
+  m <- length(B)
+  array(unlist(B),c(n,n,m))
+}
+
 # helper: hollowize a square matrix (set diagonal entries to zero)
 hollowize <- function(A){
   A - diag(diag(A))
@@ -41,7 +54,7 @@ sym_binom <- function(P,m=1,sym=TRUE){
   return(A)
 }
 
-# generating mesoscale two-samples of networks (returns 2 arrays) 
+# generating mesoscale two-samples of networks (returns 2 lists of networks)
 #' @export
 genMesoscale <- function(n,m,d, # dimensions
                          row_indices=NULL,col_indices=NULL, # indices for mesoscale test set
@@ -71,7 +84,7 @@ genMesoscale <- function(n,m,d, # dimensions
     Y2 <- matrix(stats::rnorm(n*d),n,d)
     Y2[col_indices,] <- Y1[col_indices,] + matrix(stats::rnorm(length(col_indices)*d,sd=signal/sqrt(d)),length(col_indices),d)
   }
-  
+
   # 2. Compute Theta matrix
   if(model=='logistic'){
     if(simfunc=='distance'){
@@ -109,13 +122,13 @@ genMesoscale <- function(n,m,d, # dimensions
       Theta2 <- tcrossprod(X2,Y2)
     }
   }
-  # update if self loops are not allowed, NOTE: hollow Theta1 -> no self loops under the logistic model; 
+  # update if self loops are not allowed, NOTE: hollow Theta1 -> no self loops under the logistic model;
   # need additional hollowization for gaussian model
   if(!self_loops){
     Theta1 <- hollowize(Theta1)
     Theta2 <- hollowize(Theta2)
   }
-  
+
   # 3. Compute observed signal
   if(!is.null(row_indices) & !is.null(row_indices)){
     signal_obs <- sqrt(sum((Theta1[row_indices,col_indices] - Theta2[row_indices,col_indices])^2))
@@ -123,7 +136,7 @@ genMesoscale <- function(n,m,d, # dimensions
   else{
     signal_obs <- NA
   }
-  
+
   # 4. Generate networks
   if(model=='logistic'){
     if(dispersion>1){ # overdispersed case
@@ -168,8 +181,8 @@ genMesoscale <- function(n,m,d, # dimensions
       # populate networks
       A1 <- A2 <- array(NA,c(n,n,m))
       for(kk in 1:m){
-        A1[,,kk] <- sym_binom(Theta1,sym=!directed) 
-        A2[,,kk] <- sym_binom(Theta2,sym=!directed) 
+        A1[,,kk] <- sym_binom(Theta1,sym=!directed)
+        A2[,,kk] <- sym_binom(Theta2,sym=!directed)
       }
     }
   }
@@ -191,9 +204,9 @@ genMesoscale <- function(n,m,d, # dimensions
       }
     }
   }
-  
+
   # 5. Return output
-  return(list(A1=A1,A2=A2,
+  return(list(A1=array_to_list(A1),A2=array_to_list(A2),
               Theta1=Theta1,Theta2=Theta2,
               X1=X1,X2=X2,
               Y1=Y1,Y2=Y2,
@@ -203,7 +216,7 @@ genMesoscale <- function(n,m,d, # dimensions
 
 # # testing with simulation cases from paper
 # set.seed(12)
-# 
+#
 # # null Gaussian IP
 # test1 <- genMesoscale(n=100,m=10,d=3,
 #                       row_indices=1:20,col_indices=71:100,
@@ -212,7 +225,7 @@ genMesoscale <- function(n,m,d, # dimensions
 #                       signal=0,
 #                       dispersion=sqrt(50),
 #                       simfunc='IP')
-# 
+#
 # # non-null Gaussian IP
 # test2 <- genMesoscale(n=100,m=10,d=3,
 #                       row_indices=1:20,col_indices=71:100,
@@ -221,7 +234,7 @@ genMesoscale <- function(n,m,d, # dimensions
 #                       signal=1/sqrt(2),
 #                       dispersion=sqrt(50),
 #                       simfunc='IP')
-# 
+#
 # # non-null Gaussian distance, undirected
 # test3 <- genMesoscale(n=100,m=10,d=3,
 #                       row_indices=1:20,col_indices=71:100,
@@ -231,7 +244,7 @@ genMesoscale <- function(n,m,d, # dimensions
 #                       signal=2/sqrt(2),
 #                       dispersion=sqrt(50),
 #                       simfunc='distance')
-# 
+#
 # # null logistic IP
 # test4 <- genMesoscale(n=100,m=10,d=3,
 #                       row_indices=1:20,col_indices=71:100,
@@ -240,7 +253,7 @@ genMesoscale <- function(n,m,d, # dimensions
 #                       signal=0,
 #                       dispersion=1,
 #                       simfunc='IP')
-# 
+#
 # # non-null logistic IP
 # test5 <- genMesoscale(n=100,m=10,d=3,
 #                       row_indices=1:20,col_indices=71:100,
@@ -249,7 +262,7 @@ genMesoscale <- function(n,m,d, # dimensions
 #                       signal=0.5/sqrt(2),
 #                       dispersion=1,
 #                       simfunc='IP')
-# 
+#
 # # non-null logistic IP, overdispersed
 # test6 <- genMesoscale(n=100,m=10,d=3,
 #                       row_indices=1:20,col_indices=71:100,

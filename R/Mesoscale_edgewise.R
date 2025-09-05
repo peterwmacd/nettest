@@ -36,13 +36,16 @@ multnet_to_data <- function(A, # n x n x m array
 # baselines
 
 #' @export
-Edgewise_baselines <- function(A1,A2,sig=0.05,
+Mesoscale_edgewise <- function(A1,A2,sig=0.05,
                           row_indices,col_indices,
                           directed=TRUE,
                           self_loops=TRUE){
+  # convert lists of matrices to 3D arrays
+  A1a <- list_to_array(A1)
+  A2a <- list_to_array(A2)
   # convert arrays to matrix data
-  Z1 <- multnet_to_data(A1,row_indices,col_indices,directed,self_loops)
-  Z2 <- multnet_to_data(A2,row_indices,col_indices,directed,self_loops)
+  Z1 <- multnet_to_data(A1a,row_indices,col_indices,directed,self_loops)
+  Z2 <- multnet_to_data(A2a,row_indices,col_indices,directed,self_loops)
   # dimensions
   s <- ncol(Z1)
   m1 <- nrow(Z1)
@@ -74,7 +77,7 @@ Edgewise_baselines <- function(A1,A2,sig=0.05,
   out$maxl$cutoff <- log(s) - log(log(s)) - log(pi) - 2*log(log(1/(1-sig)))
   out$maxl$pval <- 1 - exp(-exp((-1/2)*(MX - log(s) + log(log(s)) + log(pi))))
   out$maxl$result <- as.integer(MX >= out$maxl$cutoff)
-  
+
   # preliminaries for sample splitting
   m11 <- floor(m1/2)
   m21 <- floor(m2/2)
@@ -83,10 +86,10 @@ Edgewise_baselines <- function(A1,A2,sig=0.05,
   split1 <- sample(1:m1,floor(m1/2))
   split2 <- sample(1:m2,floor(m2/2))
   # convert arrays to matrix data
-  Z11 <- multnet_to_data(A1[,,split1],row_indices,col_indices,directed,self_loops)
-  Z12 <- multnet_to_data(A1[,,-split1],row_indices,col_indices,directed,self_loops)
-  Z21 <- multnet_to_data(A2[,,split2],row_indices,col_indices,directed,self_loops)
-  Z22 <- multnet_to_data(A2[,,-split2],row_indices,col_indices,directed,self_loops)
+  Z11 <- multnet_to_data(A1a[,,split1],row_indices,col_indices,directed,self_loops)
+  Z12 <- multnet_to_data(A1a[,,-split1],row_indices,col_indices,directed,self_loops)
+  Z21 <- multnet_to_data(A2a[,,split2],row_indices,col_indices,directed,self_loops)
+  Z22 <- multnet_to_data(A2a[,,-split2],row_indices,col_indices,directed,self_loops)
   # mean differences
   W1 <- colMeans(Z11) - colMeans(Z21)
   W2 <- colMeans(Z12) - colMeans(Z22)
@@ -94,13 +97,13 @@ Edgewise_baselines <- function(A1,A2,sig=0.05,
   Vsplit <- sum(((V1/m11) + (V2/m21))*((V1/m12) + (V2/m22)))
   # standardized statistic
   Ssplit <- sum(W1*W2) / sqrt(Vsplit)
-  
+
   # split-based stat with normal approximation
   out$split$stat <- Ssplit
   out$split$pval <- stats::pnorm(Ssplit,lower.tail=FALSE)
   out$split$result <- as.integer(out$split$pval <= sig)
-  
-  # return all 4 test results 
+
+  # return all 4 test results
   return(out)
 }
 
