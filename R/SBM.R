@@ -1,7 +1,43 @@
-#' @export
 
-# This function generates a static Stochastic Block Model
-#  optional: generates a Degree Corrected SBM
+#' Generate a Static Stochastic Block Model (SBM)
+#'
+#' @description
+#' Generates an adjacency matrix from a stochastic block model (SBM).
+#' Optionally, degree-corrected SBM (DCSBM) can be simulated by supplying
+#' node-specific degree parameters.
+#'
+#' @param n Integer. Number of nodes in the network.
+#' @param K Integer. Number of communities (blocks).
+#' @param Z Numeric matrix of size \eqn{n \times K}. Block membership matrix,
+#'   where each row is a one-hot vector indicating the community assignment
+#'   of a node.
+#' @param B Numeric \eqn{K \times K} matrix. Block connection probabilities
+#'   between communities.
+#' @param theta Optional numeric vector of length \eqn{n}. Degree correction
+#'   parameters. If supplied, generates a DCSBM. If omitted, a standard SBM
+#'   is generated.
+#' @param seed Optional integer. Random seed for reproducibility.
+#'
+#' @return A binary adjacency matrix of size \eqn{n \times n}.
+#'
+#' @examples
+#' # Example: 6 nodes, 2 communities
+#' n <- 6; K <- 2
+#' Z <- matrix(0, n, K)
+#' Z[1:3, 1] <- 1
+#' Z[4:6, 2] <- 1
+#'
+#' B <- matrix(c(0.8, 0.2,
+#'               0.2, 0.6), nrow = K, byrow = TRUE)
+#'
+#' # Generate SBM
+#' A <- generate_sbm(n, K, Z, B, seed = 42)
+#'
+#' # Degree-corrected SBM
+#' theta <- runif(n, 0.8, 1.2)
+#' A_dc <- generate_sbm(n, K, Z, B, theta = theta, seed = 42)
+#'
+#' @export
 generate_sbm <- function(n, K, Z, B, theta = NULL, seed = NULL) {
   # n: # of nodes
   # K: # of blocks (communities)
@@ -42,9 +78,72 @@ generate_sbm <- function(n, K, Z, B, theta = NULL, seed = NULL) {
   return(A)
 }
 
-# Generates a dynamic SBM
-#  optional: generate a dynamic DCSBM
+#' Generate a Dynamic Stochastic Block Model (SBM)
+#'
+#' @description
+#' Simulates a sequence of adjacency matrices over time under a dynamic SBM or
+#' dynamic degree-corrected SBM (DCSBM). Supports structural changes such as
+#' changepoints, community merging, and community splitting.
+#'
+#' @param n Integer. Number of nodes.
+#' @param K Integer. Number of communities at initialization.
+#' @param Z Numeric matrix of size \eqn{n \times K}. Initial block membership
+#'   matrix (rows are one-hot vectors).
+#' @param B Numeric \eqn{K \times K} matrix. Baseline block connection probabilities.
+#' @param new_B Numeric \eqn{K \times K} matrix. Block connection probabilities
+#'   to use during changepoint periods.
+#' @param theta Optional numeric vector of length \eqn{n}. Degree correction
+#'   parameters. If supplied, generates a DCSBM.
+#' @param T Integer. Number of time steps to simulate.
+#' @param persistence Numeric in [0,1]. Probability that a node changes its
+#'   community label at each time step during a changepoint.
+#' @param start_time Integer. First time step of the changepoint.
+#' @param end_time Integer. Last time step of the changepoint. Defaults to
+#'   \code{start_time}.
+#' @param theta_fluctuate Logical. If TRUE, node degree parameters fluctuate
+#'   randomly over time.
+#' @param theta_spread_change Optional numeric. If provided, widens the range
+#'   of \code{theta} for specified communities during a changepoint.
+#' @param theta_spread_blocks Optional integer vector. Community indices to
+#'   which \code{theta_spread_change} is applied.
+#' @param merge_communities Logical. If TRUE, all communities are merged into
+#'   a single community at \code{start_time}.
+#' @param split_community Logical. If TRUE, community 1 is split into two
+#'   subcommunities at \code{start_time}.
+#' @param split_within Numeric. Probability of edges within new subcommunities
+#'   after a split.
+#' @param split_between Numeric. Probability of edges between new subcommunities
+#'   after a split.
+#' @param seed Optional integer. Random seed for reproducibility.
+#'
+#' @return A list with two elements:
+#' \itemize{
+#'   \item \code{adj_list} – List of adjacency matrices (length \code{T}).
+#'   \item \code{Z_list} – List of membership matrices (length \code{T}).
+#' }
+#'
+#' @examples
+#' # Example: dynamic SBM with local changepoint
+#' n <- 10; K <- 2; T <- 20
+#' Z <- matrix(0, n, K)
+#' Z[1:(n/2), 1] <- 1
+#' Z[(n/2+1):n, 2] <- 1
+#'
+#' B <- matrix(c(0.3, 0.1,
+#'               0.1, 0.3), nrow = K, byrow = TRUE)
+#' new_B <- B; new_B[1,1] <- 0.5
+#'
+#' sim <- generate_dynamic_sbm(
+#'   n = n, K = K, Z = Z,
+#'   B = B, new_B = new_B,
+#'   T = T, start_time = 10, end_time = 20,
+#'   persistence = 0, theta_fluctuate = FALSE
+#' )
+#'
+#' length(sim$adj_list)  # 20 adjacency matrices
+#'
 #' @export
+
 generate_dynamic_sbm <- function(n, K, Z, B, new_B,theta=NULL, T = 10,
                                  persistence=0.1, start_time,
                                  end_time=start_time,
