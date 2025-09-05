@@ -35,9 +35,6 @@ sim_output <- generate_dynamic_sbm(
 dynamic_networks <- sim_output$adj_list
 
 # Define label extractor
-get_labels_from_Z <- function(Z) {
-  apply(Z, 1, function(row) which(row == 1))
-}
 node_labels <- get_labels_from_Z(Z)
 
 # Assign community colors

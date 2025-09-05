@@ -35,9 +35,6 @@ dynamic_networks <- sim5_output$adj_list
 Z_list <- sim5_output$Z_list
 
 # Define label extractor
-get_labels_from_Z <- function(Z) {
-  apply(Z, 1, function(row) which(row == 1))
-}
 
 # Choose time points of interest
 time_points <- c(10, 30, 45)
