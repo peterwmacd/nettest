@@ -59,7 +59,7 @@ generate_kidney_egg <- function(n, m, p, q, theta = NULL, seed = NULL) {
   B[2, 2] <- q
 
   # Delegate to SBM generator
-  generate_sbm(n = n, K = K, Z = Z, B = B, theta = theta, seed = NULL)
+  return (generate_sbm(n = n, K = K, Z = Z, B = B, theta = theta, seed = NULL))
 }
 
 
@@ -123,5 +123,5 @@ generate_dynamic_kidney_egg <- function(n, m, p, q, T = 10,
     }
   }
 
-  A_list
+  return(A_list)
 }
