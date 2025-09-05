@@ -1,9 +1,15 @@
 #' Plot Simulation Summary with Shewhart Control Limits and Auto-Scaled Axes
 #'
-#' @param dynamic_networks List of adjacency matrices (one per time step)
-#' @param node_labels Vector of length n indicating community labels (1 or 2)
-#' @param sim_title Title to display above the plot
-#' @param baseline_window Vector of time steps to use for control limit estimation (default: 1:25)
+#' @param dynamic_networks A list of adjacency matrices (one per time step).
+#' @param Z_list A list of membership matrices (one per time step), where each
+#'   row is a one-hot vector of community assignments. Used for computing
+#'   true block probabilities.
+#' @param node_labels An integer vector of length \eqn{n} giving the initial
+#'   community labels (e.g., 1 or 2). Used for computing group-specific
+#'   connection probabilities.
+#' @param sim_title Character string giving the title to display above the plot.
+#' @param baseline_window Integer vector of time step indices to use for
+#'   estimating control limits (default: 1:25).
 #'
 #' @return A 2x2 base R plot panel with Shewhart-style bounds and visible control limits
 #' @export
