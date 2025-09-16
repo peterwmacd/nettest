@@ -188,3 +188,52 @@ plot_F_summary_with_control_bands <- function(F_time_series, baseline_window = 1
 }
 
 
+#' Compute and (optionally) Plot F1–F9 Summaries with Control Bands
+#'
+#' @description
+#' Wrapper function that computes all nine network summary statistics (F1–F9)
+#' for a dynamic network sequence and optionally produces Shewhart-style control
+#' charts for each statistic.
+#'
+#' @param adj_list A list of adjacency matrices (one per time step).
+#' @param plot Logical. If TRUE, also produces a 3×3 plot of F1–F9 with
+#'   Shewhart-style control bands. Default is FALSE.
+#' @param baseline_window Vector of indices used to estimate baseline mean
+#'   and control limits. Default is \code{1:25}.
+#' @param sim_title Optional character string for the plot title (only used
+#'   if \code{plot = TRUE}).
+#'
+#' @return A data frame with one row per time step and columns \code{F1} through \code{F9}.
+#' If \code{plot = TRUE}, a 3×3 grid of plots is also displayed.
+#'
+#' @examples
+#' # Simulate a small dynamic network (3 time steps)
+#' set.seed(1)
+#' adj_list <- list(
+#'   matrix(sample(0:1, 25, replace = TRUE, prob = c(0.8, 0.2)), 5, 5),
+#'   matrix(sample(0:1, 25, replace = TRUE, prob = c(0.8, 0.2)), 5, 5),
+#'   matrix(sample(0:1, 25, replace = TRUE, prob = c(0.8, 0.2)), 5, 5)
+#' )
+#' F_ts <- compute_and_plot_F(adj_list, plot = TRUE, sim_title = "Toy Example")
+#'
+#' @seealso \code{\link{compute_all_F_series}}, \code{\link{plot_F_summary_with_control_bands}}
+#' @export
+compute_and_plot_F <- function(adj_list,
+                               plot = FALSE,
+                               baseline_window = 1:25,
+                               sim_title = "") {
+  # Compute all F-series
+  F_time_series <- compute_all_F_series(adj_list)
+
+  # Plot if requested
+  if (plot) {
+    plot_F_summary_with_control_bands(
+      F_time_series,
+      baseline_window = baseline_window,
+      sim_title = sim_title
+    )
+  }
+
+  return(F_time_series)
+}
+
