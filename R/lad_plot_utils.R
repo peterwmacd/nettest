@@ -61,30 +61,36 @@ compute_z_scores <- function(spectra, s = 5, l = 10) {
 #' @param Z_star Vector of Z* (difference in scores)
 #' @param changepoints Optional vector of changepoint indices to annotate
 #' @param title Optional plot title
+#' @param baseline_window Integer vector of indices used to estimate control limits (default 1:25).
 #'
 #' @return No return value; generates plots
 #' @export
-plot_lad_scores <- function(Z, Z_star, changepoints = NULL, title = "LAD Scores", skip_t=NULL) {
-  par(mfrow = c(2, 1), mar = c(4, 4, 2, 1))
+plot_lad_scores <- function(Z, Z_star, changepoints = NULL, title = "LAD Scores",
+                            baseline_window = 1:25) {
+  # Estimate baseline mean and sd
+  mZ <- mean(Z[baseline_window], na.rm = TRUE)
+  sZ <- sd(Z[baseline_window], na.rm = TRUE)
+  UCL_Z <- mZ + 3 * sZ
+  LCL_Z <- mZ - 3 * sZ
 
-  if (!is.null(skip_t) && skip_t > 1) {
-    Z_plot <- Z
-    Z_plot[1:(skip_t - 1)] <- NA
-  } else {
-    Z_plot <- Z
-  }
+  mS <- mean(Z_star[baseline_window], na.rm = TRUE)
+  sS <- sd(Z_star[baseline_window], na.rm = TRUE)
+  UCL_S <- mS + 3 * sS
+  LCL_S <- mS - 3 * sS
 
-  plot(Z_plot, type = "l", col = "blue",
-       main = paste(title, "- Z Score"),
-       ylab = "Z", xlab = "Time",
-       ylim = range(Z_plot, na.rm = TRUE))  # zooms to min/max of Z
+  par(mfrow = c(2,1), mar = c(4,4,2,1))
 
+  plot(Z, type = "l", col = "blue", main = paste(title, "- Z"),
+       ylab = "Z", xlab = "Time")
+  abline(h = c(mZ, UCL_Z, LCL_Z), col = c("blue","red","red"), lty = c(1,2,2))
   if (!is.null(changepoints)) abline(v = changepoints, col = "red", lty = 2)
 
-  plot(Z_star, type = "l", col = "darkgreen", main = paste(title, "- Z* Score"),
+  plot(Z_star, type = "l", col = "darkgreen", main = paste(title, "- Z*"),
        ylab = "Z*", xlab = "Time")
+  abline(h = c(mS, UCL_S, LCL_S), col = c("blue","red","red"), lty = c(1,2,2))
   if (!is.null(changepoints)) abline(v = changepoints, col = "red", lty = 2)
 }
+
 
 #' Run Full LAD Analysis and Plotting
 #'
@@ -94,6 +100,7 @@ plot_lad_scores <- function(Z, Z_star, changepoints = NULL, title = "LAD Scores"
 #' @param changepoints Optional: vector of known change point indices for annotation
 #' @param title Optional title for the plots
 #' @param k Optional: number of singular values to retain (NULL = full spectrum)
+#' @param baseline_window Integer vector of indices used to estimate control limits (default 1:25).
 #'
 #' @return A list with Z and Z* scores
 #' @export
@@ -105,7 +112,7 @@ run_lad_analysis <- function(adjacency_list,
                              k = NULL) {
   spectra <- lapply(adjacency_list, get_laplacian_spectrum, k = k)
   scores <- compute_z_scores(spectra, s = s, l = l)
-  plot_lad_scores(scores$Z, scores$Z_star, changepoints = changepoints, title = title, skip_t=12)
+  plot_lad_scores(scores$Z, scores$Z_star, changepoints = changepoints, title = title, baseline_window=baseline_window)
   return(scores)
 }
 
