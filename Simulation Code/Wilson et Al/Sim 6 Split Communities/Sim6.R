@@ -2,7 +2,7 @@ devtools::load_all()
 
 # Define parameters
 set.seed(42)
-n <- 50                 # Total number of nodes
+n <- 500                 # Total number of nodes
 K <- 2                  # Number of communities
 Z <- matrix(0, n, K)    # Membership matrix
 Z[1:(n/2), 1] <- 1
@@ -92,9 +92,17 @@ F_time_series <- compute_all_F_series(dynamic_networks)
 plot_F_summary_with_control_bands(F_time_series)
 par(mfrow = c(1, 1))
 
-
 lad_results <- run_lad_analysis(
   adjacency_list = dynamic_networks,
-  changepoints = t_star,  # Known structural change
-  title = "LAD - Simulation 6"
+  baseline_window = 1:10,
+  changepoints = t_star,
+  title = "LAD - Simulation 6",
+  # --- new knobs ---
+  laplacian = "unnormalized",  # use unnormalized Laplacian
+  k = 50,                       # keep 3 eigenvalues
+  which = "smallest",          # the smallest ones (good for community merge/split)
+
 )
+
+
+

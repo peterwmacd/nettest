@@ -115,9 +115,13 @@ compute_F9 <- function(adj) {
   }
 }
 
-# Wrapper to compute all
+# ---- Single-matrix wrapper (name must be compute_all_F) ----
+#' Compute all F1–F9 for a single adjacency matrix
+#' @param adj Adjacency matrix
+#' @return Named numeric vector with F1..F9
+#' @export
 compute_all_F <- function(adj) {
-  list(
+  c(
     F1 = compute_F1(adj),
     F2 = compute_F2(adj),
     F3 = compute_F3(adj),
@@ -128,6 +132,22 @@ compute_all_F <- function(adj) {
     F8 = compute_F8(adj),
     F9 = compute_F9(adj)
   )
+}
+
+# ---- Time-series function (keep this name & signature) ----
+#' Compute time series of F1–F9 statistics across a dynamic network
+#'
+#' @param adj_list A list of adjacency matrices representing a dynamic network sequence.
+#' @return A data frame with one row per time step and columns F1 through F9.
+#' @export
+compute_all_F_series <- function(adj_list) {
+  T <- length(adj_list)
+  F_matrix <- matrix(NA_real_, nrow = T, ncol = 9,
+                     dimnames = list(NULL, paste0("F", 1:9)))
+  for (t in seq_len(T)) {
+    F_matrix[t, ] <- compute_all_F(adj_list[[t]])
+  }
+  as.data.frame(F_matrix)
 }
 
 #' Plot Selected F1–F9 with Shewhart-style Control Bands

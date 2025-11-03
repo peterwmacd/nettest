@@ -1,5 +1,7 @@
 # code to generate from different (independent edge) graph models
 
+library(igraph)
+
 #' @export
 genSparseGraph <- function(m, model) {
   # m: the number of graphs

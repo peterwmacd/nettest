@@ -2,7 +2,7 @@ devtools::load_all()
 
 # Define parameters
 set.seed(42)
-n <- 50                 # Total number of nodes
+n <- 500                 # Total number of nodes
 K <- 2                  # Number of communities
 Z <- matrix(0, n, K)    # Membership matrix
 Z[1:(n/2), 1] <- 1
@@ -52,6 +52,7 @@ descriptions <- c(
 
 # Manual layout: side-by-side positioning by community
 initial_labels <- get_labels_from_Z(Z)
+node_labels <- initial_labels
 layout_pos <- matrix(NA, nrow = n, ncol = 2)
 layout_pos[node_labels == 1, 1] <- runif(sum(node_labels == 1), min = -1, max = -0.2)  # Left group
 layout_pos[node_labels == 2, 1] <- runif(sum(node_labels == 2), min = 0.2, max = 1)    # Right group
@@ -79,19 +80,25 @@ for (i in 1:3) {
 }
 par(mfrow = c(1, 1))
 
-node_labels <- initial_labels
 
-Z_list <- sim_output$Z_list
 
-plot_simulation_summary(dynamic_networks, Z_list, node_labels, sim_title = "Simulation 5")
+
+plot_simulation_summary(dynamic_networks, Z_list, initial_labels, sim_title = "Simulation 5")
 
 # === Compute F1–F9 summaries ===
 F_time_series <- compute_all_F_series(dynamic_networks)
 
-plot_F_summary_with_control_bands(F_time_series)
+#plot_F_summary_with_control_bands(F_time_series)
 par(mfrow = c(1, 1))
 lad_results <- run_lad_analysis(
   adjacency_list = dynamic_networks,
   changepoints = t_star,  # Known structural change
-  title = "LAD - Simulation 5"
+  title = "LAD - Simulation 5",
+  baseline_window = 1:10,
+  # --- new knobs ---
+  laplacian = "unnormalized",  # use unnormalized Laplacian
+  k = 50,                       # keep 3 eigenvalues
+  which = "smallest",          # the smallest ones (good for community merge/split)        # no L2 normalization
+
+
 )

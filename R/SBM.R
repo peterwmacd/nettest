@@ -198,7 +198,7 @@ generate_dynamic_sbm <- function(n, K, Z, B, new_B,theta=NULL, T = 10,
     }
 
     # Update Degree parameters (random fluctations)
-    if (!is.null(theta_fluctuate)) {
+    if (isTRUE(theta_fluctuate)) {
       theta <- theta * (1 + runif(n, -0.1, 0.1))
     }
 

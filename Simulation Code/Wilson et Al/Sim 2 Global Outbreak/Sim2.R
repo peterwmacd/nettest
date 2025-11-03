@@ -83,15 +83,19 @@ Z_list <- sim_output$Z_list
 plot_simulation_summary(dynamic_networks, Z_list, node_labels, sim_title = "Simulation 2")
 
 # === Compute F1–F9 summaries ===
-F_time_series <- compute_all_F_series(dynamic_networks)
-
-plot_F_summary_with_control_bands(F_time_series)
-
+F_time_series <- compute_and_plot_F(dynamic_networks, plot=TRUE, sim_title='Simulation 2')
 par(mfrow = c(1, 1))
 
 
 lad_results <- run_lad_analysis(
   adjacency_list = dynamic_networks,
   changepoints = t_star,  # Known structural change
-  title = "LAD - Simulation 2"
+  title = "LAD - Simulation 2",
+  baseline_window = 1:10,
+
+  # --- new knobs ---
+
+  k = n,
+  which = "smallest",          # the smallest ones (good for community merge/split)
+  laplacian = "unnormalized"
 )

@@ -1,7 +1,7 @@
 devtools::load_all()
 
 # Define parameters
-n <- 50                 # Total number of nodes
+n <- 500                 # Total number of nodes
 K <- 2                  # Number of communities
 Z <- matrix(0, n, K)    # Membership matrix
 Z[1:(n/2), 1] <- 1
@@ -51,8 +51,6 @@ descriptions <- c(
 )
 
 # Fix layout for consistent visualization
-#g_example <- graph_from_adjacency_matrix(dynamic_networks[[1]], mode = "undirected")
-#layout_pos <- layout_with_fr(g_example)
 
 # Manual layout: side-by-side positioning by community
 layout_pos <- matrix(NA, nrow = n, ncol = 2)
@@ -82,9 +80,7 @@ Z_list <- replicate(T, Z, simplify = FALSE)
 plot_simulation_summary(dynamic_networks, Z_list, node_labels, sim_title = "Simulation 1")
 
 # === Compute F1–F9 summaries ===
-F_time_series <- compute_all_F_series(dynamic_networks)
-
-plot_F_summary_with_control_bands(F_time_series)
+F_time_series <- compute_and_plot_F(dynamic_networks, plot=TRUE, sim_title='Simulation 1')
 
 par(mfrow = c(1, 1))
 
@@ -95,6 +91,14 @@ abline(v = 30, col = "red", lty = 2)
 
 lad_results <- run_lad_analysis(
   adjacency_list = dynamic_networks,
-  changepoints = t_star,  # Known structural change
-  title = "LAD - Simulation 1"
+  changepoints = t_star,  # mark the true changepoint
+  title = "LAD - Simulation 1",
+  baseline_window = 1:10, # baseline indices before changepoint
+
+  # --- new knobs ---
+
+  k = n,
+  which = "smallest",          # the smallest ones (good for community merge/split)
+  laplacian = "unnormalized"
 )
+
