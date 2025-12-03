@@ -2,7 +2,7 @@ devtools::load_all()
 
 # Define parameters
 set.seed(42)
-n <- 50                 # Total number of nodes
+n <- 500                 # Total number of nodes
 K <- 2                  # Number of communities
 Z <- matrix(0, n, K)    # Membership matrix
 Z[1:(n/2), 1] <- 1
@@ -97,5 +97,5 @@ lad_results <- run_lad_analysis(
 
   k = n,                       # keep 3 eigenvalues
   which = "smallest",          # the smallest ones (good for community merge/split)
-  laplacian = "normalized"
+  laplacian = "unnormalized"
 )
