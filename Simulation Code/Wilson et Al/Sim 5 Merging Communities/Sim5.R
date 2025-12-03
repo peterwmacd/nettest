@@ -96,8 +96,8 @@ lad_results <- run_lad_analysis(
   title = "LAD - Simulation 5",
   baseline_window = 1:10,
   # --- new knobs ---
-  laplacian = "unnormalized",  # use unnormalized Laplacian
-  k = 50,                       # keep 3 eigenvalues
+  laplacian = "normalized",  # use unnormalized Laplacian
+  k = n,                       # keep 3 eigenvalues
   which = "smallest",          # the smallest ones (good for community merge/split)        # no L2 normalization
 
 

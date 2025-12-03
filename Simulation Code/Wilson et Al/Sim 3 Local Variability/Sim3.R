@@ -97,5 +97,5 @@ lad_results <- run_lad_analysis(
 
   k = n,                       # keep 3 eigenvalues
   which = "smallest",          # the smallest ones (good for community merge/split)
-  laplacian = "unnormalized"
+  laplacian = "normalized"
 )

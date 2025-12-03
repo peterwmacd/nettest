@@ -269,12 +269,7 @@ run_lad_analysis <- function(
     l = l,
     baseline_window = baseline_window,
     changepoints = changepoints,
-    title = paste0(title,
-                   " [", laplacian,
-                   ", k=", ifelse(is.null(k), "all", k), " ", which,
-                   ", norm=", normalize,
-                   ", dist=", distance,
-                   ", ctx=", context_method, "]")
+    title = title
   )
   scores
 }

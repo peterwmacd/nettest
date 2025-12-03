@@ -98,8 +98,8 @@ lad_results <- run_lad_analysis(
   changepoints = t_star,
   title = "LAD - Simulation 6",
   # --- new knobs ---
-  laplacian = "unnormalized",  # use unnormalized Laplacian
-  k = 50,                       # keep 3 eigenvalues
+  laplacian = "normalized",  # use unnormalized Laplacian
+  k = n,                       # keep 3 eigenvalues
   which = "smallest",          # the smallest ones (good for community merge/split)
 
 )
