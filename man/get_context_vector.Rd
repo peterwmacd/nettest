@@ -2,16 +2,20 @@
 % Please edit documentation in R/lad_plot_utils.R
 \name{get_context_vector}
 \alias{get_context_vector}
-\title{Compute Context Vector from Spectra}
+\title{Build a Context Vector from Spectra}
 \usage{
-get_context_vector(spectra_list)
+get_context_vector(spectra_list, method = c("svd", "mean"))
 }
 \arguments{
-\item{spectra_list}{List of normalized singular spectra (each a numeric vector)}
+\item{spectra_list}{List of numeric vectors of equal length.}
+
+\item{method}{Character. Either \code{"svd"} (first singular vector)
+or \code{"mean"} (componentwise average).}
 }
 \value{
-The first left singular vector of the stacked spectra matrix
+Numeric vector of same length as each input spectrum.
 }
 \description{
-Compute Context Vector from Spectra
+Aggregate a set of spectral vectors into a single context vector,
+either by mean or via truncated SVD (first left singular vector).
 }

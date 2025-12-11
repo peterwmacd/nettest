@@ -2,24 +2,28 @@
 % Please edit documentation in R/Graph_Summaries.R
 \name{plot_F_summary_with_control_bands}
 \alias{plot_F_summary_with_control_bands}
-\title{Plot F1–F9 with Shewhart-style control bands}
+\title{Plot Selected F1–F9 with Shewhart-style Control Bands}
 \usage{
 plot_F_summary_with_control_bands(
   F_time_series,
   baseline_window = 1:25,
-  sim_title = ""
+  sim_title = "",
+  stats_to_include = 1:9
 )
 }
 \arguments{
-\item{F_time_series}{A data frame with 9 columns named F1 to F9, each a time series}
+\item{F_time_series}{A data frame with 9 columns named F1 to F9, each a time series.}
 
-\item{baseline_window}{Vector of indices (default 1:25) used to estimate baseline control limits}
+\item{baseline_window}{Vector of indices (default 1:25) used to estimate baseline control limits.}
 
-\item{sim_title}{Optional: title above the 3x3 grid}
+\item{sim_title}{Optional character string to display above the grid of plots.}
+
+\item{stats_to_include}{Integer vector of which F-statistics to plot. Must be a subset of 1:9.
+Default is \code{1:9} (all statistics).}
 }
 \value{
-None. Displays a 3×3 plot of F-statistics with control bands
+None. Displays a grid of plots for the selected statistics.
 }
 \description{
-Plot F1–F9 with Shewhart-style control bands
+Plot Selected F1–F9 with Shewhart-style Control Bands
 }

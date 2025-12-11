@@ -2,7 +2,7 @@
 % Please edit documentation in R/lad_plot_utils.R
 \name{run_lad_analysis}
 \alias{run_lad_analysis}
-\title{Run Full LAD Analysis and Plotting}
+\title{Run LAD Analysis (Flexible Variant)}
 \usage{
 run_lad_analysis(
   adjacency_list,
@@ -10,25 +10,46 @@ run_lad_analysis(
   l = 10,
   changepoints = NULL,
   title = "LAD Analysis",
-  k = NULL
+  laplacian = c("normalized", "unnormalized"),
+  k = NULL,
+  which = c("smallest", "largest"),
+  normalize = TRUE,
+  distance = c("cosine", "euclidean"),
+  context_method = c("svd", "mean"),
+  baseline_window = 1:25
 )
 }
 \arguments{
-\item{adjacency_list}{A list of adjacency matrices (one per time step)}
+\item{adjacency_list}{List of adjacency matrices (one per time step).}
 
-\item{s}{Short-term sliding window size (default: 5)}
+\item{s}{Short-term window size (default = 5).}
 
-\item{l}{Long-term sliding window size (default: 10)}
+\item{l}{Long-term burn-in padding (default = 10).}
 
-\item{changepoints}{Optional: vector of known change point indices for annotation}
+\item{changepoints}{Optional integer vector of known changepoints for annotation.}
 
-\item{title}{Optional title for the plots}
+\item{title}{Character. Title prefix for plots.}
 
-\item{k}{Optional: number of singular values to retain (NULL = full spectrum)}
+\item{laplacian}{Character. "normalized" or "unnormalized".}
+
+\item{k}{Optional integer. Number of eigenvalues to keep (NULL = all).}
+
+\item{which}{Character. "smallest" or "largest" eigenvalues to keep.}
+
+\item{normalize}{Logical. If TRUE, L2-normalize (Huang). If FALSE, keep raw.}
+
+\item{distance}{Character. "cosine" or "euclidean".}
+
+\item{context_method}{Character. "svd" or "mean".}
+
+\item{baseline_window}{Integer vector. Indices for baseline (default 1:25).}
 }
 \value{
-A list with Z and Z* scores
+List with components \code{Z} and \code{Z_star}.
 }
 \description{
-Run Full LAD Analysis and Plotting
+Full LAD pipeline: extract Laplacian spectra, compute Z/Z* anomaly
+scores, and plot control charts. Allows switching between
+Huang’s default (normalized spectra + cosine distance) and
+Euclidean variants (raw spectra, Euclidean distance, truncated eigenvalues).
 }

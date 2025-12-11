@@ -2,28 +2,30 @@
 % Please edit documentation in R/lad_plot_utils.R
 \name{plot_lad_scores}
 \alias{plot_lad_scores}
-\title{Plot LAD Z and Z* Scores Over Time}
+\title{Plot LAD Z and Z* with Shewhart limits}
 \usage{
 plot_lad_scores(
   Z,
   Z_star,
+  l = 10,
+  baseline_window = 1:15,
   changepoints = NULL,
-  title = "LAD Scores",
-  skip_t = NULL
+  title = "LAD"
 )
 }
 \arguments{
-\item{Z}{Vector of raw anomaly scores (Z)}
+\item{Z}{numeric vector of Z scores}
 
-\item{Z_star}{Vector of Z* (difference in scores)}
+\item{Z_star}{numeric vector of Z* scores}
 
-\item{changepoints}{Optional vector of changepoint indices to annotate}
+\item{l}{long-window size (used to compute burn-in = max(baseline) + l)}
 
-\item{title}{Optional plot title}
-}
-\value{
-No return value; generates plots
+\item{baseline_window}{integer indices for baseline (e.g. 1:25)}
+
+\item{changepoints}{optional integer vector to annotate with dashed v-lines}
+
+\item{title}{base title stem (two panels will be titled " - Z" / " - Z*")}
 }
 \description{
-Plot LAD Z and Z* Scores Over Time
+Plot LAD Z and Z* with Shewhart limits
 }

@@ -11,7 +11,6 @@ compute_all_F_series(adj_list)
 }
 \value{
 A data frame with one row per time step and columns F1 through F9.
-Each entry contains the value of the corresponding summary statistic at that time.
 }
 \description{
 Compute time series of F1–F9 statistics across a dynamic network

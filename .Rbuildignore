@@ -3,3 +3,5 @@
 ^LICENSE\.md$
 ^README\.Rmd$
 ^test_code
+^test_images
+^Simulation_code

@@ -2,18 +2,35 @@
 % Please edit documentation in R/lad_plot_utils.R
 \name{get_laplacian_spectrum}
 \alias{get_laplacian_spectrum}
-\title{Compute Normalized Laplacian Singular Spectrum}
+\title{Get Laplacian Spectrum (with options for normalization and truncation)}
 \usage{
-get_laplacian_spectrum(A, k = NULL)
+get_laplacian_spectrum(
+  A,
+  laplacian = c("normalized", "unnormalized"),
+  k = NULL,
+  which = c("smallest", "largest"),
+  normalize = TRUE
+)
 }
 \arguments{
-\item{A}{Adjacency matrix (numeric, square)}
+\item{A}{Numeric adjacency matrix (square, symmetric).}
 
-\item{k}{Optional: number of top singular values to retain}
+\item{laplacian}{Character. Either \code{"normalized"} or \code{"unnormalized"}.}
+
+\item{k}{Optional integer. Number of eigenvalues to keep (default = NULL = all).}
+
+\item{which}{Character. Either \code{"smallest"} or \code{"largest"} when truncating.}
+
+\item{normalize}{Logical. If TRUE, L2-normalize the spectrum vector (Huang default).
+If FALSE, return raw eigenvalues (Euclidean variant).}
 }
 \value{
-A unit-length numeric vector of singular values
+Numeric vector of eigenvalues (possibly truncated, possibly normalized).
 }
 \description{
-Compute Normalized Laplacian Singular Spectrum
+Compute the eigenvalue spectrum of either the unnormalized Laplacian
+(\eqn{L = D - A}) or the normalized Laplacian
+(\eqn{L_{\text{sym}} = I - D^{-1/2} A D^{-1/2}}).
+Supports truncation to the first/last \code{k} eigenvalues and optional
+L2 normalization.
 }

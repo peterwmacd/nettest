@@ -2,22 +2,35 @@
 % Please edit documentation in R/lad_plot_utils.R
 \name{compute_z_scores}
 \alias{compute_z_scores}
-\title{Compute LAD Z and Z* Scores}
+\title{Compute LAD Z and Z* Scores (Cosine or Euclidean)}
 \usage{
-compute_z_scores(spectra, s = 5, l = 10)
+compute_z_scores(
+  spectra,
+  s = 5,
+  baseline_window = 1:25,
+  distance = c("cosine", "euclidean"),
+  context_method = c("svd", "mean")
+)
 }
 \arguments{
-\item{spectra}{List of normalized Laplacian spectra (from each time step)}
+\item{spectra}{List of spectral vectors (equal length).}
 
-\item{s}{Size of the short-term window (default: 5)}
+\item{s}{Integer. Short-term window size (default = 5).}
 
-\item{l}{Size of the long-term window (default: 10)}
+\item{baseline_window}{Integer vector. Indices used for long-term baseline.}
+
+\item{distance}{Character. Either \code{"cosine"} or \code{"euclidean"}.}
+
+\item{context_method}{Character. Either \code{"svd"} or \code{"mean"} for context building.}
 }
 \value{
-A list with components:
-\item{Z}{Raw anomaly scores (cosine dissimilarity)}
-\item{Z_star}{Change-in-score anomaly scores}
+List with components \code{Z} and \code{Z_star}.
 }
 \description{
-Compute LAD Z and Z* Scores
+Given a sequence of spectral signatures, compute anomaly scores:
+\itemize{
+\item Z: raw anomaly score (distance from short-term or long-term context).
+\item Z*: change-in-score anomaly (positive increments in Z).
+}
+Supports cosine dissimilarity (Huang default) or Euclidean distance.
 }
