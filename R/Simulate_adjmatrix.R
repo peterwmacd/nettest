@@ -8,7 +8,7 @@ Simulate_ier <- function(P,directed=FALSE,self_loops=FALSE){
   if(directed){
     # sample A
     A <- matrix(as.numeric(stats::runif(n*n) < P),n,n)
-    # remove self loops 
+    # remove self loops
     if(!self_loops){
       diag(A) <- 0
     }
@@ -26,17 +26,19 @@ Simulate_ier <- function(P,directed=FALSE,self_loops=FALSE){
 
 # helper: special function for simulating a sample of overdispersed binary
 # adjacency matrices: from general IER after constructing P = E(A)
+# TODO: vectorize this computation or redo with a non-dependent Beta-Binomial
+# model
 Simulate_ier_od <- function(P,m,dispersion=1,
                             directed=FALSE,self_loops=FALSE){
   # dimension
   n <- nrow(P)
   # beta dispersion parameter
   betafac <- (m - dispersion)/(dispersion - 1)
-  # 4d array to populate
+  # 3d array to populate
   A <- array(0,c(n,n,m))
-  for(ii in 1:n){
+  for(ii in seq_len(n)){
     if(!directed){
-      for(jj in 1:ii){
+      for(jj in seq_len(ii)){
         # generate beta success prob
         pr <- stats::rbeta(1,betafac*P[ii,jj],betafac*(1-P[ii,jj]))
         etot <- stats::rbinom(1,m,pr)
@@ -47,7 +49,7 @@ Simulate_ier_od <- function(P,m,dispersion=1,
       }
     }
     else{
-      for(jj in 1:n){
+      for(jj in seq_len(n)){
         # generate beta success prob
         pr <- stats::rbeta(1,betafac*P[ii,jj],betafac*(1-P[ii,jj]))
         etot <- stats::rbinom(1,m,pr)
@@ -61,7 +63,8 @@ Simulate_ier_od <- function(P,m,dispersion=1,
   return(Alist)
 }
 
-# helper: simulate from general IER after constructing P = E(A)
+# helper: simulate general IER samples after constructing P = E(A), supports
+# overdispersed binary data (through dependence)
 Simulate_ier_sample <- function(P,m=1,dispersion=1,
                                 directed=FALSE,self_loops=FALSE){
   # toggle for multisample
@@ -79,9 +82,9 @@ Simulate_ier_sample <- function(P,m=1,dispersion=1,
   }
 }
 
-# helper: symmetric Gaussian noise with variance dispersion
+# helper: symmetric Gaussian noise with dispersion (edge variance)
 sym_noise <- function(n,dispersion=1){
-  nhalf <- n*(n+1)/2
+  nhalf <- choose(n+1,2)
   E <- matrix(0,n,n)
   E[upper.tri(E,diag=TRUE)] <- stats::rnorm(nhalf,sd=sqrt(dispersion))
   E[lower.tri(E,diag=FALSE)] <- t(E)[lower.tri(E,diag=FALSE)]
@@ -89,7 +92,7 @@ sym_noise <- function(n,dispersion=1){
 }
 
 # helper: simulate from general Gaussian edge model after constructing E(A) = P,
-# entry variance given by dispersion
+# edge variance given by dispersion parameter
 Simulate_gaussnet <- function(P,dispersion=1,
                               directed=FALSE,self_loops=FALSE){
   # dimension
@@ -97,7 +100,7 @@ Simulate_gaussnet <- function(P,dispersion=1,
   if(directed){
     # sample A
     A <- P + matrix(stats::rnorm(n^2,sd=sqrt(dispersion)),n,n)
-    # remove self loops 
+    # remove self loops
     if(!self_loops){
       diag(A) <- 0
     }
@@ -107,7 +110,7 @@ Simulate_gaussnet <- function(P,dispersion=1,
     Ptri <- pracma::triu(P,k=ifelse(self_loops,0,1))
     # sample A (upper triangle)
     A <- P + sym_noise(n,dispersion)
-    # remove self loops 
+    # remove self loops
     if(!self_loops){
       diag(A) <- 0
     }
@@ -115,7 +118,7 @@ Simulate_gaussnet <- function(P,dispersion=1,
   return(A)
 }
 
-# helper: simulate from general Gaussian edge model after constructing E(A) = P,
+# helper: simulate general Gaussian edge model samples after constructing E(A) = P,
 # entry variance given by dispersion
 Simulate_gaussnet_sample <- function(P,m=1,dispersion=1,
                                      directed=FALSE,self_loops=FALSE){

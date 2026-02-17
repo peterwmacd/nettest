@@ -43,6 +43,20 @@ Z_to_C <- function(Z){
   apply(Z,1,function(v){which.max(v)})
 }
 
+# compute pairwise euclidean distances between the rows of two matrices
+eucdist <- function(X,Y){
+  # dimensions
+  n <- nrow(X)
+  # distance matrix
+  as.matrix(dist(rbind(X,Y)))[1:n,-(1:n)]
+}
+
+# elementwise perturbation of a matrix by Gaussian noise
+perturb_mat <- function(M,sd){
+  # perturb
+  M + matrix(stats::rnorm(prod(dim(M)),sd=sd),nrow(M))
+}
+
 #### spectral clustering ####
 
 # Spectral Clustering used in TW test -------------------------------------
@@ -318,3 +332,39 @@ get_omnibus_matrix_sparse <- function(matrices) {
 #   apply(Z, 1, function(row) which(row == 1))
 # }
 
+#### Changepoint detection ####
+
+# code to produce balanced SBM matrix
+B_balanced <- function(K,a,b){
+  matrix(b,K,K) + diag(a-b,K,K)
+}
+
+# helper: merging the first two communities from a Z-matrix
+Z_merge <- function(Z){
+  # dimension
+  K <- ncol(Z)
+  # linear operator to merge
+  M <- rbind(c(1,rep(0,K-2)),diag(K-1))
+  # apply transformation
+  Z %*% M
+}
+
+# helper: extending Pi vector by splitting the first community
+Pi_split <- function(Pi){
+  c(Pi[1]/2,Pi[1]/2,Pi[-1])
+}
+
+# helper: merging/averaging the first two communities from a B-matrix
+B_merge <- function(B){
+  # dimension
+  K <- ncol(B)
+  # linear operator to merge
+  M <- rbind(c(0.5,rep(0,K-2)),diag(K-1)); M[2,1] <- 0.5
+  # apply transformation
+  crossprod(M , (B %*% M))
+}
+
+# check that an object is a list, if not make it a length 1 list
+checklist <- function(L){
+  ifelse(is.list(L),L,list(L))
+}
