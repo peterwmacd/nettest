@@ -390,5 +390,9 @@ Mesoscale_test <- function(A,B,
                             centered)
   }
   # returns acceptance/rejection decision and a pvalue
-  return(c(as.integer(test_out$pval <= sig),test_out$pval,test_out$stat))
+  out <- list()
+  out$stat <- test_out$stat
+  out$pval <- test_out$pval
+  out$result <- as.integer(test_out$pval <= sig)
+  return(out)
 }

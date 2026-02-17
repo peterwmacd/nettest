@@ -1,5 +1,48 @@
 # Utility functions for nettest
 
+#### R utilities ####
+
+# helper: hollowize a square matrix (set diagonal entries to zero)
+hollowize <- function(A){
+  A - diag(diag(A))
+}
+
+# helper: convert array to list of aligned matrices
+array_to_list <- function(A,self_loops=TRUE){
+  m <- dim(A)[3]
+  if(self_loops){
+    lapply(1:m,function(kk){A[,,kk]})
+  }
+  else{
+    lapply(1:m,function(kk){hollowize(A[,,kk])})
+  }
+}
+
+# helper: convert list of aligned matrices to 3d array
+list_to_array <- function(B){
+  n <- nrow(B[[1]])
+  m <- length(B)
+  array(unlist(B),c(n,n,m))
+}
+
+# probability clipping function
+pclip <- function(p,eps){
+  pmax(pmin(p,1-eps),eps)
+}
+
+# convert a categorial vector C to a binary membership matrix Z
+C_to_Z <- function(C,K){
+  n <- length(C)
+  Z <- matrix(0,n,K)
+  Z[cbind(seq_len(n),C)] <- 1
+  return(Z)
+}
+
+# convert a binary membership matrix Z to a categorical vector C
+Z_to_C <- function(Z){
+  apply(Z,1,function(v){which.max(v)})
+}
+
 #### spectral clustering ####
 
 # Spectral Clustering used in TW test -------------------------------------
@@ -54,7 +97,7 @@ block_avg <- function(M,c){
 #### mesoscale testing ####
 
 # logit function
-Logit <- function(x){
+logit <- function(x){
   log((x/(1-x)))
 }
 
@@ -166,7 +209,7 @@ Subspace_impute <- function(A1bar,A2bar,d,
   if(centered){
     Adiff <- Adiff - mean(Adiff,na.rm=TRUE)
   }
-  # esimate subspaces
+  # estimate subspaces
   impdiff <- softImpute::softImpute(Adiff,rank.max=d,lambda=0,type='svd')
   # store left and right-hand side projections
   if(!directed){
@@ -184,7 +227,8 @@ Subspace_impute <- function(A1bar,A2bar,d,
   }
 }
 
-# centering function for an n times d orthonormal matrix
+# 'centering' function for an n times d orthonormal matrix, ie make it
+# strictly orthogonal to the 1's vector
 center_orth <- function(W){
   n <- nrow(W)
   cmat <- diag(n) - matrix(1,n,n)/n
@@ -208,7 +252,6 @@ center_orth <- function(W){
 
 get_omnibus_matrix_sparse <- function(matrices) {
   rows <- list()
-
   # Iterate over each column
   for (column_index in seq_along(matrices)) {
     current_row <- list()
@@ -248,7 +291,7 @@ get_omnibus_matrix_sparse <- function(matrices) {
   return(omnibus_matrix)
 }
 
-
+# NOTE: may use this later
 #' Extract Community Labels from Block Membership Matrix
 #'
 #' @description
@@ -271,8 +314,7 @@ get_omnibus_matrix_sparse <- function(matrices) {
 #' get_labels_from_Z(Z)
 #' # Returns: c(1, 1, 2, 2)
 #'
-#' @export
-get_labels_from_Z <- function(Z) {
-  apply(Z, 1, function(row) which(row == 1))
-}
+# get_labels_from_Z <- function(Z) {
+#   apply(Z, 1, function(row) which(row == 1))
+# }
 
