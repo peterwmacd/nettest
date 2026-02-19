@@ -56,8 +56,6 @@ Asymp_normal <- function(A, B, sig) {
     B2 <- B2 + B[[i + m_1]]
   }
 
-  numer = (A1 - B1)
-
   #i<j upper
   num.P1 = A1 - B1
   num.P2 = A2 - B2

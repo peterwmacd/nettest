@@ -56,43 +56,10 @@ Asymp_TW <- function(A, B, sig, r) {
   #compute C
   C = (Abar - Bbar)/denom
 
-  # old spectral clustering approach
-  # for (i in 1:r){
-  #   for (j in 1:r) {
-  #     if (i != j){
-  #       curr = A[[1]][idx == i, idx == j]
-  #       Pij = mean(curr)
-  #
-  #       curr = B[[1]][idx == i, idx == j]
-  #       Qij = mean(curr)
-  #     }
-  #     else{
-  #       curr = A[[1]][idx == i, idx == j]
-  #       Pij = sum(curr) / (dim(curr)[1] * (dim(curr)[1] - 1)) # Pij might = x / 0
-  #
-  #       curr = B[[1]][idx == i, idx == j]
-  #       Qij = sum(curr) / (dim(curr)[1] * (dim(curr)[1] - 1))
-  #     }
-  #
-  #     numer = C[idx == i, idx == j]
-  #     denom = sqrt((n - 1) * (Pij) * (1 - Pij) + Qij * (1 - Qij))
-  #
-  #     if (identical(denom, numeric(0))){
-  #       denom = 1e-5
-  #     }
-  #     if (denom == 0){
-  #       denom = 1e-5
-  #     }
-  #     C[idx == i, idx == j] = numer / denom
-  #   }
-  # }
-  # # NA check
-  # C[is.na(C)] = 0
-
   #test statistics
   spectral.norm = irlba::irlba(C, 1)$d # the largest singular value
   test.stat = (n ^ (2 / 3)) * (spectral.norm - 2)
-  p.val = RMTstat::ptw(test.stat, beta=1, lower.tail = FALSE, log.p = FALSE)
+  p.val = RMTstat::ptw(test.stat, beta=1, lower.tail = FALSE)
   test <- ifelse(p.val <= sig, 1, 0)
 
   return(c(test, p.val))

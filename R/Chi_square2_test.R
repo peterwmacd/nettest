@@ -73,6 +73,7 @@ Asymp_chi2 <- function(A, B, sig, cov_method='diag') {
 
   # cov_method one of diag, shrink, full
   # previous method is diag (scale by marginal variances assuming independent edges)
+  # TODO: rewrite with switch
   if(cov_method=='diag'){
     Q <- diag(1/denom[ind_nonzero_dem])
   }
@@ -84,20 +85,17 @@ Asymp_chi2 <- function(A, B, sig, cov_method='diag') {
   }
   else if(cov_method=='full'){
     if(ncol(vec.A) > (m.a + m.b)){
-      print("insufficient sample size for full covariance")
+      stop('insufficient sample size for full covariance')
     }
     sigma.A <- stats::cov(vec.A) / m.a
     sigma.B <- stats::cov(vec.B) / m.b
     Q <- solve(sigma.A + sigma.B)
   }
-  else{print("unexpected input for cov_method")}
+  else{
+    stop('unexpected input for cov_method')
+  }
 
-  #denom = 0
-  #ind_nonzero_dem = (denom != 0)
-  #numer = numer[ind_nonzero_dem]
-  #denom = denom[ind_nonzero_dem]
-
-  #test.stat = sum(numer / denom)
+  # compute test statistic and p-value
   test.stat <- sum( mean.diff * (Q %*% mean.diff))
   p.val = stats::pchisq(test.stat, df = n * (n - 1) / 2, lower.tail = FALSE)
   test <- ifelse(p.val <= sig, 1, 0)

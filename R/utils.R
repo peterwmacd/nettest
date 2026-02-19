@@ -233,12 +233,7 @@ Subspace_impute <- function(A1bar,A2bar,d,
     Lproj <- impdiff$u
     Rproj <- impdiff$v
   }
-  if(d==1){
-    return(list(Lproj=matrix(Lproj,ncol=1),Rproj=matrix(Rproj,ncol=1)))
-  }
-  else{
-    return(list(Lproj=Lproj,Rproj=Rproj))
-  }
+  return(list(Lproj=matrix(Lproj,ncol=d),Rproj=matrix(Rproj,ncol=d)))
 }
 
 # 'centering' function for an n times d orthonormal matrix, ie make it
