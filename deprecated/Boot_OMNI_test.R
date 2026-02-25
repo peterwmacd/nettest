@@ -1,25 +1,25 @@
 # OMNI statistic and EPA statistic
-Boot_OMNI_computeStat <- function(C, r) {
+Boot_OMNI_computeStat <- function(A,B,d) {
+  # dimensions and concatenate samples
+  n <- nrow(A[[1]])
+  mA <- length(A)
+  mB <- length(B)
+  C <- c(A,B)
   # Matrix M
-  M <- get_omnibus_matrix_sparse(C)
+  M <- make_omnibus_matrix(C)
 
-  # Obtain omni
-  u1svd <- svd(as.matrix(M))
-  u1 <- u1svd$u[, 1:r]
-  s1 <- diag(u1svd$d[1:r])
-  v1 <- u1svd$v[, 1:r]
-  M_omni <- u1 %*% sqrt(s1)
+  # Obtain omni embedding
+  Msvd <- irlba::irlba(M,d)
+  XM <- Msvd$u %*% diag(sqrt(Msvd$d))
 
-  # Select first N rows and last N rows
-  n <- nrow(C[[1]])
-  A <- M_omni[1:n, , drop = FALSE]
-  B <- M_omni[(nrow(M_omni) - n + 1):nrow(M_omni), , drop = FALSE]
+  # get group-averages of omni embeddings
+  rbreak <- n*mA
+  XA <- avg_block(XM[1:rbreak,],mA)
+  XB <- avg_block(XM[(1+rbreak):nrow(XM),],mB)
 
   # ASE statistic
-  # min_W||X-Y||_F solved using orthogonal Procrustes problem, whose solution
-  stats <- norm(A - B, type = "F")
-
-  return(stats)
+  statistic <- norm(XA - XB, type = "F")
+  return(statistic)
 }
 
 # Boot-ASE/EPA Test -------------------------------------------------------

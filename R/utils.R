@@ -2,12 +2,12 @@
 
 #### R utilities ####
 
-# helper: hollowize a square matrix (set diagonal entries to zero)
+# hollowize a square matrix (set diagonal entries to zero)
 hollowize <- function(A){
   A - diag(diag(A))
 }
 
-# helper: convert array to list of aligned matrices
+# convert array to list of aligned matrices
 array_to_list <- function(A,self_loops=TRUE){
   m <- dim(A)[3]
   if(self_loops){
@@ -18,11 +18,18 @@ array_to_list <- function(A,self_loops=TRUE){
   }
 }
 
-# helper: convert list of aligned matrices to 3d array
+# convert list of aligned matrices to 3d array
 list_to_array <- function(B){
   n <- nrow(B[[1]])
   m <- length(B)
   array(unlist(B),c(n,n,m))
+}
+
+# convert list of aligned matrices to vectorized data
+list_to_vecdata <- function(B){
+  n <- nrow(B[[1]])
+  m <- length(B)
+  t(matrix(unlist(lapply(B,pracma::triu)),n*n,m))
 }
 
 # probability clipping function
@@ -57,52 +64,83 @@ perturb_mat <- function(M,sd){
   M + matrix(stats::rnorm(prod(dim(M)),sd=sd),nrow(M))
 }
 
+# column-wise comparison to a bootstrap null distribution, with a continuity correction
+# for one p-value
+bootp <- function(t,t0){
+  # dimension
+  n0 <- length(t0)
+  # bootstrap p
+  (sum(t0 >= t) + 0.5) / n0
+}
+# for multiple p-values
+bootp_multi <- function(tvec,t0mat){
+  # dimension
+  q <- ncol(t0mat)
+  # loop over bootstrap p
+  pvec <- numeric(q)
+  for(jj in 1:q){
+    pvec[jj] <- bootp(tvec[jj],t0mat[,jj])
+  }
+  return(pvec)
+}
+
+# average over blocks of a matrix (row-wise) w/kronecker
+avg_block <- function(M,nblock){
+  # dimension
+  n <- nrow(M)/nblock
+  # initialize
+  crossprod((rep(1,nblock) %x% diag(n)),M) / nblock
+}
+
+# procrustes alignment applied to Y (first argument) to align with X (second argument)
+proc_align <- function(Y,X){
+  # factorize crossproduct
+  temp <- svd(crossprod(Y,X))
+  # get transformation
+  orth <- tcrossprod(temp$u,temp$v)
+  Y_orth <- Y %*% orth
+  return(Y_orth)
+}
+
 #### spectral clustering ####
 
-# Spectral Clustering used in TW test -------------------------------------
-
-# Example: # clusters <- spectral_clus(simu$A_G, simu$A_H, r = 3)
-
-#' spectral_clus
+#' spectral_clust
 #'
+#' This function computes the cluster assignment based on the normalized singular values of a matrix \code{M}.
 #'
-#' This function computes the cluster assignment of each node, serving as an auxiliary functions for the function: Asymp_TW
+#' @param M a square \code{n}\eqn{\times}\code{n} matrix
+#' @param d number of clusters
 #'
+#' @return returns a vector of length \code{n} containing the integer-valued cluster assignments.
 #'
-#'
-#'
-#' @param C a matrix
-#' @param r r communities in G
-#'
-#' @return returns a vector of length n containing the cluster assignment of each node.
 #' @export
 #'
 #' @examples
-#' C = tcrossprod(1:10)
-#' spectral_clus(C, r = 3)
-spectral_clus = function(C, r){
-  d = rowSums(C)
-  d[d==0] = 1
-  d = 1/sqrt(d)
-  C = C * (d %*% t(d))
-  vec = svd(C)$v[, 1:r]
-  normv = sqrt(rowSums(vec^2))
+#' M = tcrossprod(1:10)
+#' spectral_clust(M, d = 3)
+spectral_clust = function(M,d){
+  # normalize input matrix
+  theta = rowSums(M)
+  theta[theta==0] = 1
+  theta = 1/sqrt(theta)
+  Mnorm = M * (theta %*% t(theta))
+  # get normalized top d singular vectors
+  svec = irlba::irlba(Mnorm,d)$v
+  normv = sqrt(rowSums(svec^2))
   normv[normv==0] = 1
-
-  a = matrix(rep(normv,r), ncol=r)
-  output = vec/a
-
-  idx = stats::kmeans(output, centers=r)$cluster
-  return(idx)
+  svec_norm = svec/matrix(rep(normv,d), ncol=d)
+  # apply k-means clustering
+  C = stats::kmeans(svec_norm, centers=d)$cluster
+  return(C)
 }
 
 # populating a matrix with its block averages
-block_avg <- function(M,c){
+block_avg <- function(M,C){
   Mbar <- matrix(0,nrow(M),ncol(M))
-  r <- max(c)
-  apply(expand.grid(1:r,1:r),1,function(s){
-    ix <- which(c==s[1])
-    iy <- which(c==s[2])
+  d <- max(C)
+  apply(expand.grid(1:d,1:d),1,function(s){
+    ix <- which(C==s[1])
+    iy <- which(C==s[2])
     Mbar[ix,iy] <<- mean(M[ix,iy])
   })
   return(Mbar)
@@ -246,93 +284,7 @@ center_orth <- function(W){
   return(Wc_orth)
 }
 
-#### OMNI test ####
-
-# genIERGraph <- function(m, model) {
-#   A <- list()
-#   for (i in 1:m) {
-#     EA <- upper.tri(model$P)
-#     A1 <- matrix(runif(length(EA)) < EA, nrow = ncol(model$P))
-#     A1 <- A1 + t(A1)  # Ensure symmetry by adding the transpose
-#     A[[i]] <- A1
-#   }
-#   return(A)
-# }
-
-get_omnibus_matrix_sparse <- function(matrices) {
-  rows <- list()
-  # Iterate over each column
-  for (column_index in seq_along(matrices)) {
-    current_row <- list()
-
-    for (row_index in seq_along(matrices)) {
-      if (row_index == column_index) {
-        # we are on the diagonal, we do not need to perform any calculation and instead add the current matrix
-        # to the current_row
-        current_row[[row_index]] <- matrices[[column_index]]
-      } else {
-        # otherwise we are not on the diagonal and we average the current_matrix with the matrix at row_index
-        # and add that to our current_row
-        matrices_averaged <- (matrices[[column_index]] + matrices[[row_index]]) * 0.5
-        current_row[[row_index]] <- matrices_averaged
-      }
-    }
-
-    result <- matrix(0, nrow=0, ncol=ncol(current_row[[1]]))
-
-    # Iterate through the current_row list and vertically concatenate matrices into the result matrix
-    for (i in 1:length(current_row)) {
-      result <- rbind(result, current_row[[i]])
-    }
-
-    # row
-    rows[[column_index]] <- result
-  }
-
-  # Combine rows to create the omnibus matrix
-  omnibus_matrix <- matrix(0, nrow = nrow(rows[[1]]), ncol=0)
-
-  # Iterate through the rows list and horizontally concatenate matrices into the result matrix
-  for (i in 1:length(rows)) {
-    omnibus_matrix <- cbind(omnibus_matrix, rows[[i]])
-  }
-
-  return(omnibus_matrix)
-}
-
-# NOTE: may use this later
-#' Extract Community Labels from Block Membership Matrix
-#'
-#' @description
-#' Converts a binary block membership matrix \eqn{Z} into a vector of community
-#' labels. Each row of \eqn{Z} is assumed to be a one-hot encoding of a node’s
-#' community membership (i.e., exactly one entry per row is equal to 1).
-#'
-#' @param Z A binary membership matrix of size \eqn{n \times K}, where
-#'   \eqn{n} is the number of nodes and \eqn{K} is the number of communities.
-#'
-#' @return An integer vector of length \eqn{n} giving the community label
-#'   (from 1 to \eqn{K}) for each node.
-#'
-#' @examples
-#' # Example: 4 nodes, 2 communities
-#' Z <- matrix(c(1,0,
-#'               1,0,
-#'               0,1,
-#'               0,1), nrow = 4, byrow = TRUE)
-#' get_labels_from_Z(Z)
-#' # Returns: c(1, 1, 2, 2)
-#'
-# get_labels_from_Z <- function(Z) {
-#   apply(Z, 1, function(row) which(row == 1))
-# }
-
 #### Changepoint detection ####
-
-# code to produce balanced SBM matrix
-B_balanced <- function(K,a,b){
-  matrix(b,K,K) + diag(a-b,K,K)
-}
 
 # helper: merging the first two communities from a Z-matrix
 Z_merge <- function(Z){
@@ -344,7 +296,7 @@ Z_merge <- function(Z){
   Z %*% M
 }
 
-# helper: extending Pi vector by splitting the first community
+# helper: extending Pi vector by splitting the probabilities for the first community
 Pi_split <- function(Pi){
   c(Pi[1]/2,Pi[1]/2,Pi[-1])
 }

@@ -1,26 +1,4 @@
-# Normality Test ----------------------------------------------------------
-
-# Note:
-#   All graphs are assumed to be unweighted, undirected, and defined on a common vertex set.
-#   Sample size >= 2
-#   Potential commands: p-value = 2 * pnorm(..., lower.tail = FALSE)
-
-# Input:
-#   A: cell array containing networks in 1st population; each cell is a sparse adjacency matrix
-#   B: cell array containing networks in 2nd population, each cell being a sparse adjacency matrix
-#   sig: significance level for acceptance of null hypothesis
-
-# Output:
-#   acceptance/rejection decision & p-value for a normal distribution
-
-# Example: Asymp_normal(simu$A_G, simu$A_H, 0.05)
-
-
-
-
-
 #' Asymptotic Normal Test
-#'
 #'
 #' The Asymp-Normal test is an asymptotic test for two-sample testing of large graphs.
 #' It is used to determine whether two graphs (or graph populations) have the same population adjacency.\cr\cr

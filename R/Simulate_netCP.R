@@ -1,15 +1,15 @@
-# Simulating from binary DCSBM sequences (discrete time) with one changepoint or one anomaly, 
+# Simulating from binary DCSBM sequences (discrete time) with one changepoint or one anomaly,
 # wrapping around Simulate_netmodel
-# all require n = #nodes, m = length of sequence, optional self_loops, directed 
+# all require n = #nodes, m = length of sequence, optional self_loops, directed
 # both default to FALSE (part of CP)
-# t_start, t_end (default to m) for changepoint sequence, t_end=t_start gives a 
+# t_start, t_end (default to m) for changepoint sequence, t_end=t_start gives a
 # sequence with a single anomaly
 
 # CP types:
 # - 'none': default, no CP/anomaly
 # - 'B': specify B1,B2
 # - 'theta': specify theta1,theta2
-# - 'Z': specify Z1,Z2 
+# - 'Z': specify Z1,Z2
 # - 'merge': special case of membership, specify B,Pi generate and merge communities 1+2
 # - 'split': special case of membership, specify B,Pi, generate and randomly split community 1
 # - 'kidneyegg': special case of 'B', provide (p,q,n_egg)
@@ -191,43 +191,43 @@ Simulate_netCP <- function(n,m,CP=list()){
 # # all with default undirected, no self loops
 # # all with n=40 nodes
 # n <- 100; m <- 10
-# B <- B_balanced(2,0.5,0.3) # NOTE: uses helper B_balanced
+# B <- matrix(0.3,2,2) + diag(0.2,2,2)
 # Bnew <- B; Bnew[2,2] <- 0.9
-# Bext <- B_balanced(3,0.5,0.3)
+# Bext <- matrix(0.3,3,3) + diag(0.2,3,3)
 # Pi <- rep(0.5,2)
 # theta <- runif(n,0.8,1.2)
 # thetanew <- theta + 0.1
-# 
+#
 # # (1) none
 # CP1 <- list(type='none',t_start=5,B=B,Pi=Pi)
 # seq1 <- Simulate_netCP(n,m,CP=CP1)
 # plot(sapply(seq1$A,mean))
-# 
+#
 # # (2) B
 # CP2 <- list(type='B',t_start=5,B1=B,B2=Bnew,Pi=Pi)
 # seq2 <- Simulate_netCP(n,m,CP=CP2)
 # plot(sapply(seq2$A,mean))
-# 
+#
 # # (3) theta
 # CP3 <- list(type='theta',t_start=5,t_end=6,B=B,Pi=Pi,theta1=theta,theta2=thetanew)
 # seq3 <- Simulate_netCP(n,m,CP=CP3)
 # plot(sapply(seq3$A,mean))
-# 
+#
 # # (4) Z
 # CP4 <- list(type='Z',t_start=5,B=B,Pi1=Pi,Pi2=Pi)
 # seq4 <- Simulate_netCP(n,m,CP=CP4)
 # plot(sapply(seq4$A,function(x){mean(x[Z_to_C(seq4$Z1)==1,Z_to_C(seq4$Z1)==1])}))
-# 
+#
 # # (5) merge
 # CP5 <- list(type='merge',t_start=5,B=B,Pi=Pi)
 # seq5 <- Simulate_netCP(n,m,CP=CP5)
 # plot(sapply(seq5$A,function(x){mean(x[Z_to_C(seq5$Z1)==1,Z_to_C(seq5$Z1)==1])}))
-# 
+#
 # # (6) split
 # CP6 <- list(type='split',t_start=5,B1=B,B2=Bext,Pi=Pi)
 # seq6 <- Simulate_netCP(n,m,CP=CP6)
 # plot(sapply(seq6$A,function(x){mean(x[Z_to_C(seq6$Z2)==1,Z_to_C(seq6$Z2)==2])}))
-# 
+#
 # # (7) kidneyegg anomaly
 # CP7 <- list(type='kidneyegg',t_start=5,t_end=5,n_egg=20,p=0.5,q=0.8)
 # seq7 <- Simulate_netCP(n,m,CP=CP7)

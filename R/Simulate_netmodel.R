@@ -246,5 +246,3 @@ Simulate_netmodel <- function(n,model=list(), #snapshot model
 # # (7) Gaussian, LSM random Z (ip sim)
 # model7 <- list(name='wLSM',d=3,dispersion=3,similarity='ip')
 # dat7 <- Simulate_netmodel(n,model7)
-
-

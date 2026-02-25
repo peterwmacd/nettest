@@ -39,7 +39,7 @@ hypothesis sets. Defaults to \code{'impute'}.}
 \item{var_type}{a string, either \code{'basic'} or \code{'quasi'} to choose the variance estimation approach. For
 binary edges, \code{'quasi'} corresponds to fitting with a quasibinomial GLM. Defaults to \code{'basic'}.
 For weighted edges, \code{'quasi'} calibrates the variance based on the variability of the edges orthogonal to the projected data, while
-\code{'basic'} uses the variability of the projected data within the samples.}
+\code{'basic'} uses the variability within the projected data.}
 
 \item{centered}{a Boolean, specifies whether to center the projections to ignore differences in the overall
 edge mean on the mesoscale set. Defaults to \code{FALSE}.}
@@ -62,8 +62,9 @@ variables outside the hypothesis set to learn a projection of the edges in
 the hypothesis set, to reduce the dimension of the test and improve test power.
 }
 \examples{
-A <- genSparseGraph(4,model=list(name='2SBM',n=10,p=0.5,q=0.3))
-B <- genSparseGraph(4,model=list(name='2SBM',n=10,p=0.5,q=0.3))
+model <- list(name='SBM',B=matrix(c(0.5,0.3,0.3,0.5),2,2),Pi=c(0.5,0.5),directed=TRUE,self_loops=TRUE)
+data <- Simulate_netmodel(n=10,model,m=4,twosample=TRUE)
+A <- data$A1; B <- data$A2
 
 # hypothesis set specified as a rectangle
 meso1 <- Mesoscale_test(A,B,sig=0.1,
@@ -80,7 +81,7 @@ meso2 <- Mesoscale_test(A,B,sig=0.1,
                         var_type='basic')
 # check that meso1 and meso2 give the same result
 
-# hypothesis set and masked sets specified as rectangles
+# hypothesis set specified as two rectangles, test with centering
 meso3 <- Mesoscale_test(A,B,sig=0.1,
                         hyp_set=list(list(1:2,1:2),list(9:10,9:10)),
                         edge_type='binary',dimension=1,directed=FALSE,self_loops=FALSE,
