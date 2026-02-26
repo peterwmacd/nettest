@@ -22,7 +22,7 @@ A list containing:
 \item{null_dist}{If \code{return_null=TRUE}, \code{nboot}\eqn{\times}\code{2} matrix containing the bootstrap samples for the Frobenius and operator norm tests}
 }
 \description{
-Two bootstrap tests for network two-sample testing.
+Two bootstrap tests for network two-sample testing, described in \href{https://arxiv.org/abs/1811.12752}{Ghoshdastidar & von Luxburg, (2018)}.
 Both are used to test the global null hypothesis under the undirected IER model with no self-loops.
 The Frobenius test statistic is an estimate of the Frobenius norm of the difference in expected adjacency matrices.
 The operator test statistic is an estimate of the operator norm of the difference in expected adjacency matrices.

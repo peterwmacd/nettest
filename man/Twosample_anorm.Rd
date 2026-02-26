@@ -17,7 +17,7 @@ A list containing:
 \item{statistic}{The asymptotically normal test statistic}
 }
 \description{
-An asymptotic test for network two-sample testing.
+An asymptotic test for network two-sample testing, described in \href{https://arxiv.org/abs/1811.12752}{Ghoshdastidar & von Luxburg, (2018)}.
 It is used to test the global null hypothesis under the undirected IER model with no self-loops.
 The test is based on an estimate of the Frobenius norm of the difference in expected adjacency matrices,
 estimated by sample splitting.

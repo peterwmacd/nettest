@@ -15,7 +15,7 @@
 # - 'kidneyegg': special case of 'B', provide (p,q,n_egg)
 
 # main function
-Simulate_netCP <- function(n,m,CP=list()){
+Simulate_CP <- function(n,m,CP=list()){
   # default time_end = m
   if(is.null(CP$t_end)){
     CP$t_end <- m

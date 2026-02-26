@@ -2,7 +2,7 @@
 % Please edit documentation in R/utils.R
 \name{spectral_clust}
 \alias{spectral_clust}
-\title{spectral_clust}
+\title{(Normalized) Spectral Clustering}
 \usage{
 spectral_clust(M, d)
 }
@@ -15,7 +15,7 @@ spectral_clust(M, d)
 returns a vector of length \code{n} containing the integer-valued cluster assignments.
 }
 \description{
-This function computes the cluster assignment based on the normalized singular values of a matrix \code{M}.
+This function computes the cluster assignment based on the normalized singular vectors of a matrix \code{M}.
 }
 \examples{
 M = tcrossprod(1:10)

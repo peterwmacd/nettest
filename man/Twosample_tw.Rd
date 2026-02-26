@@ -4,17 +4,20 @@
 \alias{Twosample_tw}
 \title{Two-Sample Tracy-Widom Test}
 \usage{
-Twosample_tw(A, B, P_method = "SBA", delta = 0.2)
+Twosample_tw(A, B, P_method = "SBA", delta = 0.2, d = 2)
 }
 \arguments{
 \item{A}{A matrix or list of matrices, adjacency matrix(es) for the first sample.}
 
 \item{B}{A matrix or list of matrices, adjacency matrix(es) for the second sample.}
 
-\item{P_method}{P-matrix estimation method, one of \code{'NBS'}, \code{'SBA'}or \code{'USVT'}, implemented using the \code{graphon} package.
-\code{SBA} requires an additional tuning parameter \code{delta}. Defaults to \code{'SBA'}. Note that \code{'NBS'} and \code{'USVT'} can perform erratically when \eqn{n} is very small.}
+\item{P_method}{P-matrix estimation method, one of \code{'NBS'}, \code{'SBA'}, \code{'USVT'} or \code{spectral_clust}.
+All but \code{spectral_clust} are implemented using the \code{graphon} package.
+Defaults to \code{'spectral_clust'}. Note that \code{'NBS'} and \code{'USVT'} can perform erratically when \eqn{n} is very small.}
 
 \item{delta}{precision parameter larger than zero, only used if \code{P_method='SBA'}. Defaults to \code{0.2}.}
+
+\item{d}{number of clusters, only used if \code{P_method='spectral_clust'}. Defaults to \code{2}.}
 }
 \value{
 A list containing:
@@ -22,7 +25,7 @@ A list containing:
 \item{statistic}{The asymptotically \eqn{TW(1)} test statistic.}
 }
 \description{
-An asymptotic test for network two-sample testing.
+An asymptotic test for network two-sample testing, described in \href{https://arxiv.org/abs/1811.12752}{Ghoshdastidar & von Luxburg, (2018)}.
 It is used to test the global null hypothesis under the undirected IER model with no self-loops.
 The test is based on the largest singular value of a suitably scaled difference of mean adjacency matrices.
 The test statistic is asymptotically Tracy-Widom distributed with parameter \eqn{\beta=1} (denoted \eqn{TW(1)}) as \eqn{n \rightarrow \infty}.
@@ -32,5 +35,5 @@ m1 <- list(name='SBM',B=matrix(0.3,2,2),Pi=c(0.5,0.5))
 m2 <- m1; m2$B <- matrix(c(1,0.3,0.3,1),2,2)
 A <- Simulate_netmodel(n=40,model=m1,m=4)$A
 B <- Simulate_netmodel(n=40,model=m2,m=4)$A
-test <- Twosample_tw(A,B,P_method='SBA')
+test <- Twosample_tw(A,B,P_method='spectral_clust',d=2)
 }

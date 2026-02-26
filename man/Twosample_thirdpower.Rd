@@ -4,17 +4,20 @@
 \alias{Twosample_thirdpower}
 \title{Two-sample 3rd Power Test}
 \usage{
-Twosample_thirdpower(A, B, P_method = "SBA", delta = 0.2, ndiag = 100)
+Twosample_thirdpower(A, B, P_method = "SBA", delta = 0.2, d = 2, ndiag = 100)
 }
 \arguments{
 \item{A}{A matrix or list of matrices, adjacency matrix(es) for the first sample.}
 
 \item{B}{A matrix or list of matrices, adjacency matrix(es) for the second sample.}
 
-\item{P_method}{P-matrix estimation method, one of \code{'NBS'}, \code{'SBA'}or \code{'USVT'}, implemented using the \code{graphon} package.
-\code{SBA} requires an additional tuning parameter \code{delta}. Defaults to \code{'SBA'}. Note that \code{'NBS'} and \code{'USVT'} can perform erratically when \eqn{n} is very small.}
+\item{P_method}{P-matrix estimation method, one of \code{'NBS'}, \code{'SBA'}, \code{'USVT'} or \code{spectral_clust}.
+All but \code{spectral_clust} are implemented using the \code{graphon} package.
+Defaults to \code{'SBA'}. Note that \code{'NBS'} and \code{'USVT'} can perform erratically when \eqn{n} is very small.}
 
 \item{delta}{precision parameter larger than zero, only used if \code{P_method='SBA'}. Defaults to \code{0.2}.}
+
+\item{d}{number of clusters, only used if \code{P_method='spectral_clust'}. Defaults to \code{2}.}
 
 \item{ndiag}{number of random replications of the diagonal adjustment. Defaults to \code{100}.}
 }
@@ -24,7 +27,7 @@ A list containing:
 \item{statistic}{The asymptotically normal test statistic, averaged over random replications of the diagonal adjustment.}
 }
 \description{
-An asymptotic test for network two-sample testing.
+An asymptotic test for network two-sample testing, described in \href{https://www.jstor.org/stable/27280115}{Chen et al., (2024)}.
 It is used to test the global null hypothesis under the undirected IER model with no self-loops.
 The test is based on the trace of the 3rd power of a suitably scaled difference of mean adjacency matrices, with a random adjustment to the diagonal entries.
 The test statistic is asymptotically normal as \eqn{n \rightarrow \infty}, as long as \eqn{m} does not grow too fast.

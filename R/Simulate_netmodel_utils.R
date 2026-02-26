@@ -1,7 +1,7 @@
-# code to generate snapshots from different (independent edge) graph models
+# utility functions to generate snapshots from different (independent edge) graph models
 # after precalculating P = E(A)
 
-# helper: simulate from general IER after constructing P = E(A)
+# simulate from general IER after constructing P = E(A)
 Simulate_ier <- function(P,directed=FALSE,self_loops=FALSE){
   # dimension
   n <- nrow(P)
@@ -24,10 +24,8 @@ Simulate_ier <- function(P,directed=FALSE,self_loops=FALSE){
   return(A)
 }
 
-# helper: special function for simulating a sample of overdispersed binary
+# special function for simulating a sample of overdispersed binary
 # adjacency matrices: from general IER after constructing P = E(A)
-# TODO: vectorize this computation or redo with a non-dependent Beta-Binomial
-# model
 Simulate_ier_od <- function(P,m,dispersion=1,
                             directed=FALSE,self_loops=FALSE){
   # dimension
@@ -63,7 +61,7 @@ Simulate_ier_od <- function(P,m,dispersion=1,
   return(Alist)
 }
 
-# helper: simulate general IER samples after constructing P = E(A), supports
+# simulate general IER samples after constructing P = E(A), supports
 # overdispersed binary data (through dependence)
 Simulate_ier_sample <- function(P,m=1,dispersion=1,
                                 directed=FALSE,self_loops=FALSE){
@@ -82,16 +80,7 @@ Simulate_ier_sample <- function(P,m=1,dispersion=1,
   }
 }
 
-# helper: symmetric Gaussian noise with dispersion (edge variance)
-sym_noise <- function(n,dispersion=1){
-  nhalf <- choose(n+1,2)
-  E <- matrix(0,n,n)
-  E[upper.tri(E,diag=TRUE)] <- stats::rnorm(nhalf,sd=sqrt(dispersion))
-  E[lower.tri(E,diag=FALSE)] <- t(E)[lower.tri(E,diag=FALSE)]
-  return(E)
-}
-
-# helper: simulate from general Gaussian edge model after constructing E(A) = P,
+# simulate from general Gaussian edge model after constructing E(A) = P,
 # edge variance given by dispersion parameter
 Simulate_gaussnet <- function(P,dispersion=1,
                               directed=FALSE,self_loops=FALSE){
@@ -118,7 +107,7 @@ Simulate_gaussnet <- function(P,dispersion=1,
   return(A)
 }
 
-# helper: simulate general Gaussian edge model samples after constructing E(A) = P,
+# simulate general Gaussian edge model samples after constructing E(A) = P,
 # entry variance given by dispersion
 Simulate_gaussnet_sample <- function(P,m=1,dispersion=1,
                                      directed=FALSE,self_loops=FALSE){

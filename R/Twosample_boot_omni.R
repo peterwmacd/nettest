@@ -44,7 +44,7 @@ omni_stat <- function(C,mA,mB,d) {
 
 #' Two-sample Bootstrap Tests using omnibus embedding
 #'
-#' Bootstrap test for network two-sample testing.
+#' Bootstrap test for network two-sample testing, described in \href{https://arxiv.org/abs/1705.09355}{Levin et al., (2019)}.
 #' Used to test the global null hypothesis under the undirected IER model with no self-loops, and assuming the
 #' expected adjacency matrices have rank \code{d}.
 #' The ASE test statistic is based on the (Frobenius norm) difference in the omnibus (OMNI) embeddings for

@@ -1,6 +1,6 @@
 #' Two-Sample Tracy-Widom Test
 #'
-#' An asymptotic test for network two-sample testing.
+#' An asymptotic test for network two-sample testing, described in \href{https://arxiv.org/abs/1811.12752}{Ghoshdastidar & von Luxburg, (2018)}.
 #' It is used to test the global null hypothesis under the undirected IER model with no self-loops.
 #' The test is based on the largest singular value of a suitably scaled difference of mean adjacency matrices.
 #' The test statistic is asymptotically Tracy-Widom distributed with parameter \eqn{\beta=1} (denoted \eqn{TW(1)}) as \eqn{n \rightarrow \infty}.

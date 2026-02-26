@@ -1,7 +1,5 @@
 # Utility functions for nettest
 
-#### R utilities ####
-
 # hollowize a square matrix (set diagonal entries to zero)
 hollowize <- function(A){
   A - diag(diag(A))
@@ -64,6 +62,15 @@ perturb_mat <- function(M,sd){
   M + matrix(stats::rnorm(prod(dim(M)),sd=sd),nrow(M))
 }
 
+# symmetric Gaussian noise with dispersion (edge variance)
+sym_noise <- function(n,dispersion=1){
+  nhalf <- choose(n+1,2)
+  E <- matrix(0,n,n)
+  E[upper.tri(E,diag=TRUE)] <- stats::rnorm(nhalf,sd=sqrt(dispersion))
+  E[lower.tri(E,diag=FALSE)] <- t(E)[lower.tri(E,diag=FALSE)]
+  return(E)
+}
+
 # column-wise comparison to a bootstrap null distribution, with a continuity correction
 # for one p-value
 bootp <- function(t,t0){
@@ -102,11 +109,9 @@ proc_align <- function(Y,X){
   return(Y_orth)
 }
 
-#### spectral clustering ####
-
-#' spectral_clust
+#' (Normalized) Spectral Clustering
 #'
-#' This function computes the cluster assignment based on the normalized singular values of a matrix \code{M}.
+#' This function computes the cluster assignment based on the normalized singular vectors of a matrix \code{M}.
 #'
 #' @param M a square \code{n}\eqn{\times}\code{n} matrix
 #' @param d number of clusters
@@ -146,8 +151,6 @@ block_avg <- function(M,C){
   return(Mbar)
 }
 
-#### mesoscale testing ####
-
 # logit function
 logit <- function(x){
   log((x/(1-x)))
@@ -163,6 +166,11 @@ vexpit <- function(x){
   expit(x)*(1-expit(x))
 }
 
+# bayes estimator for proportion data
+bmean <- function(v){
+  (sum(v) + 1)/(length(v) + 2)
+}
+
 # rank-truncated psuedoinverse
 Tpinv <- function(M,r){
   temp <- irlba::irlba(M,r)
@@ -171,7 +179,9 @@ Tpinv <- function(M,r){
   return(out)
 }
 
-# calculate the pseudoinverse matrix for enforcing symmetry constraints
+# calculate the pseudoinverse matrix for enforcing symmetry constraints on a set
+# of matrix indices. s_ind, s_ind_tri are matrices of booleans, describing the active
+# index sets (overall and upper triangular resp.)
 Sym_span <- function(s_ind,s_ind_tri){
   # reordered hypothesis set and upper triangle
   ind <- which(s_ind,arr.ind=TRUE)
@@ -191,89 +201,6 @@ Sym_span <- function(s_ind,s_ind_tri){
   return(Gd)
 }
 
-# onestep projection estimator
-# takes the data, dimension, hyp_indices, masked_indices (default empty)
-# returns left and righthand side o/n bases
-Subspace_onestep <- function(A1bar,A2bar,d,
-                             hyp_indices,
-                             masked_indices,
-                             self_loops,
-                             directed,
-                             centered){
-  # if no self loops, check for diagonal NAs and replace with 0's
-  if(!self_loops & any(is.na(c(diag(A1bar),diag(A2bar))))){
-    diag(A1bar) <- 0
-    diag(A2bar) <- 0
-  }
-  # difference matrix
-  Adiff <- A1bar - A2bar
-  # dimension
-  n <- nrow(A1bar)
-  # compute masked rows/columns
-  s_ind <- matrix(0,n,n)
-  s_ind[rbind(hyp_indices,masked_indices)] <- 1
-  mrow <- which(rowSums(s_ind)>0)
-  mcol <- which(colSums(s_ind)>0)
-  # estimate blocks
-  Chat <- Adiff[,-mcol]
-  Rhat <- Adiff[-mrow,]
-  Dhat <- Adiff[-mrow,-mcol]
-  # overall mean
-  if(centered){
-    mu <- mean(c(Chat,Rhat,Dhat))
-  }
-  else{
-    mu <- 0
-  }
-  # estimate T
-  That <- (Chat - mu) %*% Tpinv((Dhat - mu),d) %*% (Rhat - mu)
-  # estimate subspaces
-  temp <- irlba::irlba(That,d)
-  # store left and right-hand side projections
-  if(!directed){
-    Lproj <- Rproj <- temp$u
-  }
-  else{
-    Lproj <- temp$u
-    Rproj <- temp$v
-  }
-  return(list(Lproj=Lproj,Rproj=Rproj))
-}
-
-# projection estimates with hard imputation
-# takes the data, dimension, hyp_indices, masked_indices (default empty)
-# returns left and righthand side o/n bases
-Subspace_impute <- function(A1bar,A2bar,d,
-                            hyp_indices,
-                            masked_indices,
-                            self_loops,
-                            directed,
-                            centered){
-  uindices <- rbind(hyp_indices,masked_indices)
-  # estimate blocks
-  Adiff <- A1bar - A2bar
-  # mask self loops, hypothesis set and masked indices
-  if(!self_loops){
-    diag(Adiff) <- NA
-  }
-  Adiff[uindices] <- NA
-  # centering
-  if(centered){
-    Adiff <- Adiff - mean(Adiff,na.rm=TRUE)
-  }
-  # estimate subspaces
-  impdiff <- softImpute::softImpute(Adiff,rank.max=d,lambda=0,type='svd')
-  # store left and right-hand side projections
-  if(!directed){
-    Lproj <- Rproj <- impdiff$u
-  }
-  else{
-    Lproj <- impdiff$u
-    Rproj <- impdiff$v
-  }
-  return(list(Lproj=matrix(Lproj,ncol=d),Rproj=matrix(Rproj,ncol=d)))
-}
-
 # 'centering' function for an n times d orthonormal matrix, ie make it
 # strictly orthogonal to the 1's vector
 center_orth <- function(W){
@@ -284,9 +211,7 @@ center_orth <- function(W){
   return(Wc_orth)
 }
 
-#### Changepoint detection ####
-
-# helper: merging the first two communities from a Z-matrix
+# merging the first two communities from a Z-matrix
 Z_merge <- function(Z){
   # dimension
   K <- ncol(Z)
@@ -296,12 +221,12 @@ Z_merge <- function(Z){
   Z %*% M
 }
 
-# helper: extending Pi vector by splitting the probabilities for the first community
+# extending Pi (SBM probability) vector by splitting the probabilities for the first community
 Pi_split <- function(Pi){
   c(Pi[1]/2,Pi[1]/2,Pi[-1])
 }
 
-# helper: merging/averaging the first two communities from a B-matrix
+# merging/averaging the first two communities from a B-matrix
 B_merge <- function(B){
   # dimension
   K <- ncol(B)
@@ -313,5 +238,10 @@ B_merge <- function(B){
 
 # check that an object is a list, if not make it a length 1 list
 checklist <- function(L){
-  ifelse(is.list(L),L,list(L))
+  if(is.list(L)){
+    return(L)
+  }
+  else{
+    return(list(L))
+  }
 }

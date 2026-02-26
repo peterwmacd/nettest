@@ -24,7 +24,7 @@ A list containing:
 \item{null_dist}{If \code{return_null=TRUE}, a list of 2 \code{nboot}-vectors containing the bootstrap samples for the OMNI tests}
 }
 \description{
-Bootstrap test for network two-sample testing.
+Bootstrap test for network two-sample testing, described in \href{https://arxiv.org/abs/1705.09355}{Levin et al., (2019)}.
 Used to test the global null hypothesis under the undirected IER model with no self-loops, and assuming the
 expected adjacency matrices have rank \code{d}.
 The ASE test statistic is based on the (Frobenius norm) difference in the omnibus (OMNI) embeddings for

@@ -41,7 +41,8 @@ ase_stats <- function(A,B,d,return_P=FALSE) {
 
 #' Two-sample Bootstrap Tests using ASE
 #'
-#' Two bootstrap tests for network two-sample testing.
+#' Two bootstrap tests for network two-sample testing, described in \href{https://arxiv.org/abs/1811.12752}{Ghoshdastidar & von Luxburg, (2018)},
+#' based on methods originally developed in \href{https://doi.org/10.1080/10618600.2016.1193505}{Tang et al., (2017)}.
 #' Both are used to test the global null hypothesis under the undirected IER model with no self-loops, and assuming the
 #' expected adjacency matrices have rank \code{d}.
 #' The ASE test statistic is based on the (Frobenius norm) difference in the aligned adjacency spectral embeddings for

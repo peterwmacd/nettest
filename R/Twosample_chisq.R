@@ -1,6 +1,7 @@
 #' Two-sample Chi-squared Test
 #'
-#' An asymptotic test for network two-sample testing.
+#' An asymptotic test for network two-sample testing, described in \href{https://arxiv.org/abs/1811.12752}{Ghoshdastidar & von Luxburg, (2018)},
+#' based on methods originally developed in \href{https://www.jstor.org/stable/26362203}{Ginestet et al., (2017)}.
 #' It is used to test the global null hypothesis under the undirected IER model with no self-loops.
 #' The test is based on the sum of squared difference in edgewise means.
 #' The test statistic is asymptotically chi-squared distributed for fixed \eqn{n}, as \eqn{m \rightarrow \infty} (where \eqn{m} is the number of networks in each sample).

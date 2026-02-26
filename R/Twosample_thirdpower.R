@@ -1,6 +1,6 @@
 #' Two-sample 3rd Power Test
 #'
-#' An asymptotic test for network two-sample testing.
+#' An asymptotic test for network two-sample testing, described in \href{https://www.jstor.org/stable/27280115}{Chen et al., (2024)}.
 #' It is used to test the global null hypothesis under the undirected IER model with no self-loops.
 #' The test is based on the trace of the 3rd power of a suitably scaled difference of mean adjacency matrices, with a random adjustment to the diagonal entries.
 #' The test statistic is asymptotically normal as \eqn{n \rightarrow \infty}, as long as \eqn{m} does not grow too fast.
