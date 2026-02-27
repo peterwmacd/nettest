@@ -1,21 +1,70 @@
-# Simulation wrapper for two-sample LSM networks with mesoscale 
-# (rectangular) differences
-
-# Mesoscale model specifies at most
-# - name (LSM or wLSM)
-# - hyp_set (must be a rectangle, specified as list(row_indices,col_indices))
-# - directed (default TRUE)
-# - self_loops (default TRUE)
-# - dispersion (default 1)
-# - d 
-# - signal (default 0), perturbation variance of pos'ns incident to hyp_set = signal^2 / d
-# - similarity ('dist' or 'ip')
-# - alpha (intercept if similarity='dist', defaults to 0)
-
-# NOTE: only supports logit link for binary n/ws, identity link/Gaussian edges
-# for weighted networks
-
-# main function
+#' Simulation for Two-Sample Networks with Mesoscale Differences
+#'
+#' Simulates two lists of adjacency matrices on \code{n} nodes from latent space models with
+#' binary edges (with logit link) or weighted (Gaussian) edges. Expected networks can differ on a specified (rectangular) set of edges.
+#' Additional model information is specified as part of the \code{model} argument, see below.
+#'
+#' @param n An integer, number of nodes in each network.
+#' @param model A named list, provides additional model information:
+#' \describe{
+#'     \item{name}{Either \code{'LSM'} or \code{'wLSM'}, describing the edge type.}
+#'     \item{hyp_set}{A length two list containing a vector of row indices and a vector of column indices, used to
+#'     construct the rectangular set of differential edges.}
+#'     \item{directed}{A Boolean, are the network edges directed? Defaults to \code{FALSE}.}
+#'     \item{self_loops}{A Boolean, are self-loops allowed? Defaults to \code{FALSE}.}
+#'     \item{dispersion}{Edge dispersion parameter. For weighted networks, corresponds to edge variance.}
+#'     \item{d}{For \code{LSM} and \code{wLSM}, integer latent space dimension.}
+#'     \item{signal}{Perturbation standard deviation for latent positions. Each entry of a latent position
+#'     incident to the hypothesis set rows or columns is perturbed by Gaussian noise with variance \code{signal^2/d}.}
+#'     \item{similarity}{Either \code{'ip'} or \code{'dist'}, corresponding to inner product and Euclidean distance similarity functions.}
+#'     \item{alpha}{For \code{LSM} with \code{model$similarity='dist'}, intercept term for edge probabilities.}
+#' }
+#' @param m An integer, number of networks in each sample.
+#'
+#' @return A list containing:
+#' \item{A1}{A list of \code{m} matrices, simulated adjacency matrix(es) for sample 1.}
+#' \item{A2}{A list of \code{m} matrices, simulated adjacency matrix(es) for sample 2.}
+#' \item{Z1}{An \eqn{n \times d} latent position matrix used to generate sample 1.}
+#' \item{Z2}{An \eqn{n \times d} latent position matrix used to generate sample 2.}
+#' \item{Y1}{An \eqn{n \times d} right-hand side latent position matrix used to generate sample 1 (only if \code{model$directed=TRUE}).}
+#' \item{Y2}{An \eqn{n \times d} right-hand side latent position matrix used to generate sample 2 (only if \code{model$directed=TRUE}).}
+#'
+#' @export
+#'
+#' @examples
+#' set.seed(12)
+#' n <- 100; m <- 10
+#' H <- list(1:20,71:100)
+#'
+#' # (1) null Gaussian IP
+#' model1 <- list(name='wLSM',hyp_set=H,d=3,signal=0,dispersion=1,similarity='ip')
+#' data1 <- Simulate_mesoscale(n,model1,m)
+#' #image(data1$A1[[1]] - data1$A2[[1]])
+#'
+#' # (2) non-null Gaussian IP
+#' model2 <- list(name='wLSM',hyp_set=H,d=3,signal=1/sqrt(2),dispersion=1,similarity='ip')
+#' data2 <- Simulate_mesoscale(n,model2,m)
+#' #image(data2$A1[[1]] - data2$A2[[1]])
+#'
+#' # (3) null Gaussian distance, undirected
+#' model3 <- list(name='wLSM',hyp_set=H,d=3,signal=0,dispersion=1,similarity='dist',directed=FALSE)
+#' data3 <- Simulate_mesoscale(n,model3,m)
+#' #image(data3$Z1 - data3$Z2)
+#'
+#' # (4) null logistic IP
+#' model4 <- list(name='LSM',hyp_set=H,d=3,signal=0,similarity='ip')
+#' data4 <- Simulate_mesoscale(n,model4,m)
+#' #table(data4$A1[[1]] - data4$A2[[1]])
+#'
+#' # (5) non-null logistic IP
+#' model5 <- list(name='LSM',hyp_set=H,d=3,signal=0.5/sqrt(2),similarity='ip')
+#' data5 <- Simulate_mesoscale(n,model5,m)
+#' #table(data5$A1[[1]] - data5$A2[[1]])
+#'
+#' # (6) non-null logistic IP, overdispersed
+#' model6 <- list(name='LSM',hyp_set=H,d=3,signal=0.5/sqrt(2),dispersion=2,similarity='ip')
+#' data6 <- Simulate_mesoscale(n,model6,m)
+#' #table(data6$A1[[1]] - data6$A2[[1]])
 Simulate_mesoscale <- function(n,model=list(),m){
   # check hypothesis set
   if(!(length(model$hyp_set)==2)){
@@ -85,39 +134,3 @@ Simulate_mesoscale <- function(n,model=list(),m){
                 Z1=Z1,Z2=Z2))
   }
 }
-
-# #### test instances ####
-# set.seed(12)
-# # all with n=100,m=10,d=3,hyp_set=list(1:20,71:100)
-# n <- 100; m <- 10
-# H <- list(1:20,71:100)
-# 
-# # (1) null Gaussian IP
-# model1 <- list(name='wLSM',hyp_set=H,d=3,signal=0,dispersion=1,similarity='ip')
-# dat1 <- Simulate_mesoscale(n,model1,m)
-# image(dat1$A1[[1]] - dat1$A2[[1]])
-# 
-# # (2) non-null Gaussian IP
-# model2 <- list(name='wLSM',hyp_set=H,d=3,signal=1/sqrt(2),dispersion=1,similarity='ip')
-# dat2 <- Simulate_mesoscale(n,model2,m)
-# image(dat2$A1[[1]] - dat2$A2[[1]])
-# 
-# # (3) null Gaussian distance, undirected
-# model3 <- list(name='wLSM',hyp_set=H,d=3,signal=0,dispersion=1,similarity='dist',directed=FALSE)
-# dat3 <- Simulate_mesoscale(n,model3,m)
-# image(dat3$Z1 - dat3$Z2)
-# 
-# # (4) null logistic IP
-# model4 <- list(name='LSM',hyp_set=H,d=3,signal=0,similarity='ip')
-# dat4 <- Simulate_mesoscale(n,model4,m)
-# table(dat4$A1[[1]] - dat4$A2[[1]])
-# 
-# # (5) non-null logistic IP
-# model5 <- list(name='LSM',hyp_set=H,d=3,signal=0.5/sqrt(2),similarity='ip')
-# dat5 <- Simulate_mesoscale(n,model5,m)
-# table(dat5$A1[[1]] - dat5$A2[[1]])
-# 
-# # (6) non-null logistic IP, overdispersed
-# model6 <- list(name='LSM',hyp_set=H,d=3,signal=0.5/sqrt(2),dispersion=2,similarity='ip')
-# dat6 <- Simulate_mesoscale(n,model6,m)
-# table(dat6$A1[[1]] - dat6$A2[[1]])

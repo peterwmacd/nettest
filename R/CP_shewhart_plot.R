@@ -35,7 +35,7 @@ CP_shewhart_plots <- function(series,
     pdf(file=pdfname,width=11,height=8)
   }
   nr <- ceiling(sqrt(nplot)); nc <- ceiling(nplot/nr)
-  par(mfrow = c(nr,nc),mar = c(4, 4, 2, 1))
+  par(mfrow = c(nr,nc),mar = c(4, 4, 1, 1))
   pwmcol <- c('dodgerblue3','sienna2','plum4','darkseagreen3','lightsteelblue2','lightgoldenrod2')
   xind <- as.integer(rownames(series))
   # allocate space for output
@@ -52,7 +52,7 @@ CP_shewhart_plots <- function(series,
     UCL <- m0 + 3 * s0
     LCL <- m0 - 3 * s0
     yrange <- range(c(y, UCL, LCL), na.rm = TRUE)
-    yexpand <- yrange + c(-1,1)*(diff(yrange)/10) # default expansion
+    yexpand <- yrange + c(-1,1)*(diff(yrange)/10) # limit expansion
 
     if(makeplot){
       plot(xind,xind,type='n',ylim = yexpand,

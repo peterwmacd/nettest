@@ -1,24 +1,75 @@
-# Simulating from different network models, wrapping around Simulate_adjmatrix
-# all require n = #nodes, optional self_loops, directed both default to FALSE
-# optional m for repeated sampling: if m > 1 returns a list of adjacency matrices
-# from repeated samples; if twosample=TRUE splits into two list of size m
-
-# ER
-# requires p
-
-# (DC)SBM
-# requires (B,Z) or (B,Pi), optional theta (degree parameter) vector
-
-# LSM
-# requires Z or d (default rnorm or rdirichlet positions), link (identity or logit,
-# only for binary), similarity (ip or dist + optional intercept alpha for binary dist)
-
-# Gaussian dispersion = sigma^2, binary dispersion can induce overdispersion in
-# samples of size m > 1
-
-# main function
-Simulate_netmodel <- function(n,model=list(), #snapshot model
-                              m=1,twosample=FALSE){ #repeated sampling
+#' Simulation for (Samples of) Networks
+#'
+#' Simulates an adjacency matrix or list of \code{m} adjacency matrices on \code{n} nodes from one of several named network models.
+#' Additional model information is specified as part of the \code{model} argument, see below.
+#'
+#' @param n An integer, number of nodes in each network.
+#' @param model A named list, provides additional model information:
+#' \describe{
+#'     \item{name}{One of \code{'ER'}, \code{'SBM'}, \code{'LSM'}, \code{'wSBM'}, \code{'wLSM'}, describing the model type.
+#'     \code{ER}, \code{SBM}, and \code{LSM} produce binary adjacency matrices; \code{wSBM} and \code{wLSM} produce weighted
+#'     adjacency matrices with Gaussian edges.}
+#'     \item{directed}{A Boolean, are the network edges directed? Defaults to \code{FALSE}.}
+#'     \item{self_loops}{A Boolean, are self-loops allowed? Defaults to \code{FALSE}.}
+#'     \item{dispersion}{Edge dispersion parameter. For weighted networks, corresponds to edge variance.}
+#'     \item{p}{For \code{ER}, overall edge probability.}
+#'     \item{Z}{For \code{SBM}, \code{LSM}, \code{wSBM} and \code{wLSM}, prespecified \eqn{n \times K} community membership matrix or \eqn{n \times d} latent position matrix.
+#'     If unspecified, community memberships are generated using \code{model$Pi}, and latent space positions are random Gaussian or Dirichlet (for RDPG).}
+#'     \item{Y}{For directed \code{LSM} and \code{wLSM}, prespecified \eqn{n \times d} right-hand side latent position matrix.}
+#'     \item{Pi}{For \code{SBM} and \code{wSBM}, \eqn{K}-vector of community membership probabilities.}
+#'     \item{B}{For \code{SBM} and \code{wSBM}, \eqn{K \times K} matrix of connection probabilties or means.}
+#'     \item{theta}{For \code{SBM} and \code{wSBM}, \eqn{n}-vector of degree correction parameters. Defaults to a vector of \code{1}'s.}
+#'     \item{d}{For \code{LSM} and \code{wLSM}, integer latent space dimension.}
+#'     \item{link}{For \code{LSM}, either \code{'logit'} or \code{'identity'}. If \code{'identity'}, edge parameters are not passed through the \code{expit} function.}
+#'     \item{similarity}{For \code{LSM} and \code{wLSM}, either \code{'ip'} or \code{'dist'} corresponding to inner product and Euclidean distance similarity functions.}
+#'     \item{alpha}{For \code{LSM} with \code{model$similarity='dist'}, intercept term for edge probabilities.}
+#' }
+#' @param m An integer, number of repeated samples.
+#'
+#' @return A list containing:
+#' \item{A}{A matrix or list of \code{m} matrices, simulated adjacency matrix(es).}
+#' \item{Z}{An \eqn{n \times K} community membership matrix or \eqn{n \times d} latent position matrix used to generate each sample.}
+#' \item{Y}{An \eqn{n \times K} right-hand side community membership matrix or \eqn{n \times d} right-hand side latent position matrix used to generate each sample (only if \code{model$directed=TRUE}).}
+#'
+#' @export
+#'
+#' @examples
+#' set.seed(12)
+#' n <- 40
+#'
+#' # (1) ER
+#' model1 <- list(name='ER',p=0.3)
+#' data1 <- Simulate_netmodel(n,model=model1)
+#'
+#' # (2) SBM fixed Z
+#' Z2 <- C_to_Z(sample(1:2,n,replace=TRUE),2)
+#' B2 <- matrix(c(0.7,0.3,0.3,0.7),2,2)
+#' model2 <- list(name='SBM',Z=Z2,B=B2)
+#' data2 <- Simulate_netmodel(n,model=model2)
+#'
+#' # (3) DCSBM random Z
+#' Pi3 <- c(0.5,0.5)
+#' theta3 <- runif(n,min=0.8,1.2)
+#' model3 <- list(name='SBM',B=B2,Pi=Pi3,theta=theta3)
+#' data3 <- Simulate_netmodel(n,model=model3)
+#'
+#' # (4) binary RDPG fixed Z
+#' Z4 <- MCMCpack::rdirichlet(n,rep(1,2))
+#' model4 <- list(name='LSM',Z=Z4,link='identity',similarity='ip')
+#' data4 <- Simulate_netmodel(n,model=model4)
+#'
+#' # (5) binary LSM random Z (dist sim + logit link)
+#' model5 <- list(name='LSM',d=2,link='logit',similarity='dist',alpha=1)
+#' data5 <- Simulate_netmodel(n,model=model5)
+#'
+#' # (6) Gaussian, block constant/SBM
+#' model6 <- list(name='wSBM',B=3*B2,Pi=Pi3)
+#' data6 <- Simulate_netmodel(n,model=model6)
+#'
+#' # (7) Gaussian, LSM random Z (ip sim)
+#' model7 <- list(name='wLSM',d=3,dispersion=3,similarity='ip')
+#' data7 <- Simulate_netmodel(n,model7)
+Simulate_netmodel <- function(n,model=list(),m=1){
   # set default parameters
   # default undirected
   if(is.null(model$directed)){
@@ -166,83 +217,18 @@ Simulate_netmodel <- function(n,model=list(), #snapshot model
          })
   # generate adjacency matrix sample(s)
   if(binary){
-    if(twosample){
-      A1 <- Simulate_ier_sample(P,m,model$dispersion,
-                                directed=model$directed,self_loops=model$self_loops)
-      A2 <- Simulate_ier_sample(P,m,model$dispersion,
-                                directed=model$directed,self_loops=model$self_loops)
-    }
-    else{
-      A <- Simulate_ier_sample(P,m,model$dispersion,
-                               directed=model$directed,self_loops=model$self_loops)
-    }
+    A <- Simulate_ier_sample(P,m,model$dispersion,
+                             directed=model$directed,self_loops=model$self_loops)
   }
   else{
-    if(twosample){
-      A1 <- Simulate_gaussnet_sample(P,m,model$dispersion,
-                                     directed=model$directed,self_loops=model$self_loops)
-      A2 <- Simulate_gaussnet_sample(P,m,model$dispersion,
-                                     directed=model$directed,self_loops=model$self_loops)
-    }
-    else{
-      A <- Simulate_gaussnet_sample(P,m,model$dispersion,
-                                    directed=model$directed,self_loops=model$self_loops)
-    }
+    A <- Simulate_gaussnet_sample(P,m,model$dispersion,
+                                  directed=model$directed,self_loops=model$self_loops)
   }
   # return adjacency and communities/positions
-  if(twosample){
-    if(model$directed){
-      return(list(A1=A1,A2=A2,Z=model$Z,Y=model$Y))
-    }
-    else{
-      return(list(A1=A1,A2=A2,Z=model$Z))
-    }
+  if(model$directed){
+    return(list(A=A,Z=model$Z,Y=model$Y))
   }
   else{
-    if(model$directed){
-      return(list(A=A,Z=model$Z,Y=model$Y))
-    }
-    else{
-      return(list(A=A,Z=model$Z))
-    }
+    return(list(A=A,Z=model$Z))
   }
 }
-
-# #### test instances ####
-# set.seed(12)
-# # all with default undirected, no self loops
-# # all with n=40 nodes
-# n <- 40
-#
-# # (1) ER
-# model1 <- list(name='ER',p=0.3)
-# dat1 <- Simulate_netmodel(n,model=model1)
-#
-# # (2) SBM fixed Z
-# Z2 <- C_to_Z(sample(1:2,n,replace=TRUE),2)
-# B2 <- matrix(c(0.7,0.3,0.3,0.7),2,2)
-# model2 <- list(name='SBM',Z=Z2,B=B2)
-# dat2 <- Simulate_netmodel(n,model=model2)
-#
-# # (3) DCSBM random Z
-# Pi3 <- c(0.5,0.5)
-# theta3 <- runif(n,min=0.8,1.2)
-# model3 <- list(name='SBM',B=B2,Pi=Pi3,theta=theta3)
-# dat3 <- Simulate_netmodel(n,model=model3)
-#
-# # (4) binary RDPG fixed Z
-# Z4 <- MCMCpack::rdirichlet(n,rep(1,2))
-# model4 <- list(name='LSM',Z=Z4,link='identity',similarity='ip')
-# dat4 <- Simulate_netmodel(n,model=model4)
-#
-# # (5) binary LSM random Z (dist sim + logit link)
-# model5 <- list(name='LSM',d=2,link='logit',similarity='dist',alpha=1)
-# dat5 <- Simulate_netmodel(n,model=model5)
-#
-# # (6) Gaussian, block constant/SBM
-# model6 <- list(name='wSBM',B=3*B2,Pi=Pi3)
-# dat6 <- Simulate_netmodel(n,model=model6)
-#
-# # (7) Gaussian, LSM random Z (ip sim)
-# model7 <- list(name='wLSM',d=3,dispersion=3,similarity='ip')
-# dat7 <- Simulate_netmodel(n,model7)

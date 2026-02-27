@@ -17,7 +17,7 @@ CP_shewhart_plots(
 
 \item{baseline}{An integer, sample size of the leading portion used to estimate control limits. Defaults to the minimum of \code{ceiling(m/2)} and \code{25}.}
 
-\item{makeplot}{A Boolean, should a plot be produced. Defaults to \code{TRUE}.}
+\item{makeplot}{A Boolean, should a plot be produced? Defaults to \code{TRUE}.}
 
 \item{makeCP}{A numeric vector of changepoints to mark on plots. Defaults to \code{NULL}.}
 

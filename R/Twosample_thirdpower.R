@@ -57,9 +57,10 @@ Twosample_thirdpower <- function(A, B, P_method='SBA',delta=0.2,d=2,ndiag=100){
          spectral_clust={
            # cluster on pooled mean adjacency matrix
            C <- spectral_clust((Abar+Bbar)/2,d)
+           Z <- C_to_Z(C,d)
            # store estimates
-           PA=block_avg(Abar,C)
-           PB=block_avg(Bbar,C)
+           PA=block_avg(Abar,Z)
+           PB=block_avg(Bbar,Z)
          },
          {
            stop('unexpected input for P_method')

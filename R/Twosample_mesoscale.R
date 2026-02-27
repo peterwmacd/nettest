@@ -1,4 +1,4 @@
-#' Mesoscale testing
+#' Two-sample Mesoscale Projection Tests
 #'
 #' Asymptotic tests for network two-sample testing, described in \href{https://arxiv.org/abs/2410.17046}{MacDonald et al., (2024)}.
 #' Used to test a mesoscale null hypothesis for a prespecified collection
@@ -69,17 +69,17 @@
 #'                         var_type='quasi',
 #'                         centered=TRUE)
 #'
-Mesoscale_test <- function(A,B,
-                           hyp_set, # a rectangle (list of {row,col}), a 2-column matrix of entries, or a list if rectangles
-                           edge_type='weighted',# or binary
-                           # other options
-                           d=1,
-                           directed = TRUE,
-                           self_loops = TRUE, # overrides diagonal entries in the hyp_set, masks them in the imputation routine
-                           proj_type='impute',# or onestep
-                           var_type='basic', # or 'quasi'
-                           centered=FALSE,
-                           masked_set=list(NULL,NULL) # a rectangle (list of {row,col}), a 2-column matrix of entries, or a list if rectangles
+Twosample_mesoscale <- function(A,B,
+                                hyp_set, # a rectangle (list of {row,col}), a 2-column matrix of entries, or a list if rectangles
+                                edge_type='weighted',# or binary
+                                # other options
+                                d=1,
+                                directed = TRUE,
+                                self_loops = TRUE, # overrides diagonal entries in the hyp_set, masks them in the imputation routine
+                                proj_type='impute',# or onestep
+                                var_type='basic', # or 'quasi'
+                                centered=FALSE,
+                                masked_set=list(NULL,NULL) # a rectangle (list of {row,col}), a 2-column matrix of entries, or a list if rectangles
 ){
   # initial cleaning and dimensions, make A,B one element lists if they are not
   A <- checklist(A)

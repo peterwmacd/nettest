@@ -29,6 +29,6 @@ for an ordered sequence of undirected networks with no self-loops.
 }
 \examples{
 CP <- list(type='kidneyegg',t_start=5,n_egg=20,p=0.5,q=0.8)
-A <- Simulate_netCP(100,10,CP=CP)$A
+A <- Simulate_CP(100,10,CP=CP)$A
 test <- CP_summaries(A)
 }

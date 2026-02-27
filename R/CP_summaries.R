@@ -1,4 +1,4 @@
-#### helper function ####
+#### helper functions ####
 
 # compute scan statistics from k-hop neighbourhoods
 # G is an igraph object
