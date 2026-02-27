@@ -166,7 +166,8 @@ vexpit <- function(x){
   expit(x)*(1-expit(x))
 }
 
-# bayes estimator for proportion data
+# Bayesian estimator of mean for proportion data
+# equivalent to posterior mean under a Unif(0,1) prior
 bmean <- function(v){
   (sum(v) + 1)/(length(v) + 2)
 }
@@ -244,4 +245,20 @@ checklist <- function(L){
   else{
     return(list(L))
   }
+}
+
+# cosine angular distance between two vectors (performs normalization internally)
+cos_dis <- function(a, b) {
+  denom <- sqrt(sum(a*a)) * sqrt(sum(b*b))
+  if(denom == 0){
+    return(0)
+  }
+  else{
+    return(1 - abs(sum(a * b) / denom))
+  }
+}
+
+# remove rows of a matrix that are all NA
+trimNA <- function(M){
+  M[apply(M,1,function(x){!all(is.na(x))}),]
 }

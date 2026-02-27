@@ -80,15 +80,17 @@ summary_features <- function(A){
 #'
 #' @examples
 #' CP <- list(type='kidneyegg',t_start=5,n_egg=20,p=0.5,q=0.8)
-#' A <- Simulate_netCP(100,10,CP=CP)$A
+#' A <- Simulate_CP(100,10,CP=CP)$A
 #' test <- CP_summaries(A)
 CP_summaries <- function(A){
-  # initial cleaning, make A,B one element lists if they are not
+  # initial cleaning and dimensions, make A,B one element lists if they are not
   A <- checklist(A)
+  m <- length(A)
   # compute summaries
   summaries <- t(apply(list_to_array(A),3,summary_features))
   colnames(summaries) <- c('density','maxdeg','maxeig',
                            'scan-1','scan-2','scan-3',
                            'triangle','gclust','apath')
+  rownames(summaries) <- 1:m
   return(summaries)
 }

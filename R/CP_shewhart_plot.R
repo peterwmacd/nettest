@@ -6,7 +6,7 @@
 #'
 #' @param series A matrix, each column contains a univariate time series of length \code{m}.
 #' @param baseline An integer, sample size of the leading portion used to estimate control limits. Defaults to the minimum of \code{ceiling(m/2)} and \code{25}.
-#' @param makeplot A Boolean, should a plot be produced. Defaults to \code{TRUE}.
+#' @param makeplot A Boolean, should a plot be produced? Defaults to \code{TRUE}.
 #' @param makeCP A numeric vector of changepoints to mark on plots. Defaults to \code{NULL}.
 #' @param pdfname A string, file location and name to save as a pdf plot. Defaults to \code{NULL}.
 #'
@@ -37,6 +37,7 @@ CP_shewhart_plots <- function(series,
   nr <- ceiling(sqrt(nplot)); nc <- ceiling(nplot/nr)
   par(mfrow = c(nr,nc),mar = c(4, 4, 2, 1))
   pwmcol <- c('dodgerblue3','sienna2','plum4','darkseagreen3','lightsteelblue2','lightgoldenrod2')
+  xind <- as.integer(rownames(series))
   # allocate space for output
   shew_matrix <- matrix(NA,nplot,2); colnames(shew_matrix) <- c('mean','sd')
 
@@ -45,8 +46,8 @@ CP_shewhart_plots <- function(series,
     yname <- colnames(series)[jj]
 
     y0 <- y[1:baseline]
-    m0 <- shew_matrix[jj,1] <- mean(y0)
-    s0 <- shew_matrix[jj,2] <- sd(y0)
+    m0 <- shew_matrix[jj,1] <- mean(y0,na.rm=TRUE)
+    s0 <- shew_matrix[jj,2] <- sd(y0,na.rm=TRUE)
 
     UCL <- m0 + 3 * s0
     LCL <- m0 - 3 * s0
@@ -54,14 +55,14 @@ CP_shewhart_plots <- function(series,
     yexpand <- yrange + c(-1,1)*(diff(yrange)/10) # default expansion
 
     if(makeplot){
-      plot(1:m,1:m,type='n',ylim = yexpand,
+      plot(xind,xind,type='n',ylim = yexpand,
            ylab = yname, xlab = "Index",
            main = '')
       usr <- par("usr")
       rect(0, usr[3], baseline, usr[4],
            col = adjustcolor('gray',0.2),
            border = NA)
-      lines(1:m, y, type = "b",col=pwmcol[2])
+      lines(xind, y, type = "b",col=pwmcol[2])
       abline(h = m0, col = pwmcol[1], lty=2)
       abline(h = c(UCL, LCL), col = pwmcol[3], lty =3)
       if(!is.null(makeCP)){
