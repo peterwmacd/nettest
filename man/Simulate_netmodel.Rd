@@ -51,7 +51,7 @@ model1 <- list(name='ER',p=0.3)
 data1 <- Simulate_netmodel(n,model=model1)
 
 # (2) SBM fixed Z
-Z2 <- C_to_Z(sample(1:2,n,replace=TRUE),2)
+Z2 <- nettest:::C_to_Z(sample(1:2,n,replace=TRUE),2)
 B2 <- matrix(c(0.7,0.3,0.3,0.7),2,2)
 model2 <- list(name='SBM',Z=Z2,B=B2)
 data2 <- Simulate_netmodel(n,model=model2)

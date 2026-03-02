@@ -11,7 +11,7 @@ Simulate_CP(n, m, CP = list())
 
 \item{m}{An integer, number of networks in the sequence.}
 
-\item{model}{A named list, provides additional model information:
+\item{CP}{A named list, provides additional model information:
 \describe{
 \item{type}{Type of changepoint, one of \code{'none'}, \code{'B'}, \code{'theta'}, \code{'Z'}, \code{'merge'},
 \code{'split'}, or \code{'kidneyegg'}. \code{B}, \code{Z}, and \code{theta} denote the parameter which changes
@@ -76,36 +76,36 @@ thetanew <- theta + 0.1
 
 # (1) none
 CP1 <- list(type='none',t_start=5,B=B,Pi=Pi)
-seq1 <- Simulate_netCP(n,m,CP=CP1)
+seq1 <- Simulate_CP(n,m,CP=CP1)
 #plot(sapply(seq1$A,mean))
 
 # (2) B
 CP2 <- list(type='B',t_start=5,B1=B,B2=Bnew,Pi=Pi)
-seq2 <- Simulate_netCP(n,m,CP=CP2)
+seq2 <- Simulate_CP(n,m,CP=CP2)
 #plot(sapply(seq2$A,mean))
 
 # (3) theta
 CP3 <- list(type='theta',t_start=5,B=B,Pi=Pi,theta1=theta,theta2=thetanew)
-seq3 <- Simulate_netCP(n,m,CP=CP3)
+seq3 <- Simulate_CP(n,m,CP=CP3)
 #plot(sapply(seq3$A,mean))
 
 # (4) Z
 CP4 <- list(type='Z',t_start=5,B=B,Pi1=Pi,Pi2=Pi)
-seq4 <- Simulate_netCP(n,m,CP=CP4)
+seq4 <- Simulate_CP(n,m,CP=CP4)
 #plot(sapply(seq4$A,function(x){mean(x[Z_to_C(seq4$Z1)==1,Z_to_C(seq4$Z1)==1])}))
 
 # (5) merge
 CP5 <- list(type='merge',t_start=5,B=B,Pi=Pi)
-seq5 <- Simulate_netCP(n,m,CP=CP5)
+seq5 <- Simulate_CP(n,m,CP=CP5)
 #plot(sapply(seq5$A,function(x){mean(x[Z_to_C(seq5$Z1)==1,Z_to_C(seq5$Z1)==1])}))
 
 # (6) split
 CP6 <- list(type='split',t_start=5,B1=B,B2=Bext,Pi=Pi)
-seq6 <- Simulate_netCP(n,m,CP=CP6)
+seq6 <- Simulate_CP(n,m,CP=CP6)
 #plot(sapply(seq6$A,function(x){mean(x[Z_to_C(seq6$Z2)==1,Z_to_C(seq6$Z2)==2])}))
 
 # (7) kidneyegg anomaly
 CP7 <- list(type='kidneyegg',t_start=5,t_end=5,n_egg=20,p=0.5,q=0.8)
-seq7 <- Simulate_netCP(n,m,CP=CP7)
+seq7 <- Simulate_CP(n,m,CP=CP7)
 #plot(sapply(seq7$A,function(x){mean(x[Z_to_C(seq7$Z1)==1,Z_to_C(seq7$Z1)==1])}))
 }

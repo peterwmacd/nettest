@@ -10,7 +10,7 @@
 #' @param P_method P-matrix estimation method, one of \code{'NBS'}, \code{'SBA'}, \code{'USVT'} or \code{spectral_clust}.
 #' All but \code{spectral_clust} are implemented using the \code{graphon} package.
 #' Defaults to \code{'SBA'}. Note that \code{'NBS'} and \code{'USVT'} can perform erratically when \eqn{n} is very small.
-#' @param delta precision parameter larger than zero, only used if \code{P_method='SBA'}. Defaults to \code{0.2}.
+#' @param delta precision parameter larger than zero, only used if \code{P_method='SBA'}. Defaults to \code{0.5}.
 #' @param d number of clusters, only used if \code{P_method='spectral_clust'}. Defaults to \code{2}.
 #' @param ndiag number of random replications of the diagonal adjustment. Defaults to \code{100}.
 #'
@@ -25,8 +25,8 @@
 #' m2 <- m1; m2$B <- matrix(c(1,0.3,0.3,1),2,2)
 #' A <- Simulate_netmodel(n=40,model=m1,m=4)$A
 #' B <- Simulate_netmodel(n=40,model=m2,m=4)$A
-#' test <- Twosample_thirdpower(A,B,P_method='SBA',delta=0.2)
-Twosample_thirdpower <- function(A, B, P_method='SBA',delta=0.2,d=2,ndiag=100){
+#' test <- Twosample_thirdpower(A,B,P_method='SBA')
+Twosample_thirdpower <- function(A, B, P_method='SBA',delta=0.5,d=2,ndiag=100){
   # initial cleaning and dimensions, make A,B one element lists if they are not
   A <- checklist(A)
   B <- checklist(B)

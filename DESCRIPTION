@@ -1,12 +1,13 @@
 Package: nettest
-Title: Graph Two Sample Testing
+Title: Graph Two Sample Testing and CPD
 Version: 0.0.0.9000
 Authors@R: c(
-    person("Peter W.", "MacDonald", , "pwmacdon@umich.edu", role = c("aut", "cre"),
+    person("Peter W.", "MacDonald", , "pwmacdon@uwaterloo.edu", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0001-7024-7242")),
-    person("Yunze", "Wei", , "yzwei@umich.edu", role=c("aut")),
-    person("Yanxi", "Shi", , "yanxishi@umich.edu", role=c("aut")))
-Description: What the package does (one paragraph).
+    person("Yunze", "Wei",, "yzwei@umich.edu", role=c("aut")),
+    person("Yanxi", "Shi", ,"yanxishi@umich.edu", role=c("aut")),
+    person("Steven", "Mou", ,"smou@uwaterloo.ca", role=c("aut")))
+Description: Methods for two-sample testing and changepoint detection for network data. Includes code for mesoscale two-sample testing for network data.
 License: GPL (>= 3)
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
@@ -16,8 +17,10 @@ BugReports: https://github.com/peterwmacd/nettest/issues
 Imports: 
     corpcor (>= 1.6.10),
     graphon (>= 0.3.5),
+    igraph,
     irlba (>= 2.3.5.1),
-    Matrix,
+    MASS,
+    MCMCpack,
     pracma (>= 2.4.4),
     RMTstat (>= 0.3.1),
     softImpute (>= 1.4-1),

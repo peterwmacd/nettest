@@ -67,7 +67,7 @@ dcsbm_stats <- function(A,C){
 #' @examples
 #' CP <- list(type='kidneyegg',t_start=5,n_egg=20,p=0.5,q=0.8)
 #' data <- Simulate_CP(100,10,CP=CP)
-#' A <- data$A; C <- Z_to_C(data$Z1)
+#' A <- data$A; C <- nettest:::Z_to_C(data$Z1)
 #' test <- CP_dcsbm(A,C)
 CP_dcsbm <- function(A,C=NULL,K=2){
   # initial cleaning and dimensions, make A,B one element lists if they are not

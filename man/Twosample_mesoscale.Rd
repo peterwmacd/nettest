@@ -71,19 +71,20 @@ to learn a projection of the edges in the hypothesis set, to reduce the dimensio
 test and improve test power. This test supports one network per sample.
 }
 \examples{
-model <- list(name='SBM',B=matrix(c(0.5,0.3,0.3,0.5),2,2),Pi=c(0.5,0.5),directed=TRUE,self_loops=TRUE)
-data <- Simulate_netmodel(n=10,model,m=4,twosample=TRUE)
-A <- data$A1; B <- data$A2
+model <- list(name='SBM',B=matrix(c(0.5,0.3,0.3,0.5),2,2),Pi=c(0.5,0.5),
+              directed=TRUE,self_loops=TRUE)
+A <- Simulate_netmodel(n=10,model,m=4)$A
+B <- Simulate_netmodel(n=10,model,m=4)$A
 
 # hypothesis set specified as a rectangle
-meso1 <- Mesoscale_test(A,B,
+meso1 <- Twosample_mesoscale(A,B,
                         hyp_set=list(1:4,1:4),
                         edge_type='binary',d=1,directed=TRUE,self_loops=TRUE,
                         proj_type='one_step',
                         var_type='basic')
 
 # same hypothesis set specified as unstructured indices
-meso2 <- Mesoscale_test(A,B,
+meso2 <- Twosample_mesoscale(A,B,
                         hyp_set=cbind(c(1,1,1,2,2,3),c(2,3,4,3,4,4)),
                         edge_type='binary',d=1,directed=TRUE,self_loops=TRUE,
                         proj_type='one_step',
@@ -91,7 +92,7 @@ meso2 <- Mesoscale_test(A,B,
 # check that meso1 and meso2 give the same result
 
 # hypothesis set specified as two rectangles, test with centering
-meso3 <- Mesoscale_test(A,B,
+meso3 <- Twosample_mesoscale(A,B,
                         hyp_set=list(list(1:2,1:2),list(9:10,9:10)),
                         edge_type='binary',d=1,directed=TRUE,self_loops=FALSE,
                         proj_type='impute',

@@ -105,10 +105,10 @@ Simulate_mesoscale <- function(n,model=list(),m){
   # generate positions
   if(model$directed){
     # LHS positions
-    Z1 <- matrix(stats::rnorm(n*d),n,d); Z2 <- matrix(stats::rnorm(n*d),n,d)
+    Z1 <- matrix(stats::rnorm(n*model$d),n,model$d); Z2 <- matrix(stats::rnorm(n*model$d),n,model$d)
     Z2[row_indices,] <- perturb_mat(Z1[row_indices,],sd=psd)
     # RHS positions
-    Y1 <- matrix(stats::rnorm(n*d),n,d); Y2 <- matrix(stats::rnorm(n*d),n,d)
+    Y1 <- matrix(stats::rnorm(n*model$d),n,model$d); Y2 <- matrix(stats::rnorm(n*model$d),n,model$d)
     Y2[col_indices,] <- perturb_mat(Y1[col_indices,],sd=psd)
     # store positions
     model1$Z <- Z1; model2$Z <- Z2
@@ -116,7 +116,7 @@ Simulate_mesoscale <- function(n,model=list(),m){
   }
   else{
     # LHS positions
-    Z1 <- matrix(stats::rnorm(n*d),n,d); Z2 <- matrix(stats::rnorm(n*d),n,d)
+    Z1 <- matrix(stats::rnorm(n*model$d),n,model$d); Z2 <- matrix(stats::rnorm(n*model$d),n,model$d)
     Z2[all_indices,] <- perturb_mat(Z1[all_indices,],sd=psd)
     # store positions
     model1$Z <- Z1; model2$Z <- Z2

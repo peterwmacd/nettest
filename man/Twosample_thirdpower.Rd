@@ -4,7 +4,7 @@
 \alias{Twosample_thirdpower}
 \title{Two-sample 3rd Power Test}
 \usage{
-Twosample_thirdpower(A, B, P_method = "SBA", delta = 0.2, d = 2, ndiag = 100)
+Twosample_thirdpower(A, B, P_method = "SBA", delta = 0.5, d = 2, ndiag = 100)
 }
 \arguments{
 \item{A}{A matrix or list of matrices, adjacency matrix(es) for the first sample.}
@@ -15,7 +15,7 @@ Twosample_thirdpower(A, B, P_method = "SBA", delta = 0.2, d = 2, ndiag = 100)
 All but \code{spectral_clust} are implemented using the \code{graphon} package.
 Defaults to \code{'SBA'}. Note that \code{'NBS'} and \code{'USVT'} can perform erratically when \eqn{n} is very small.}
 
-\item{delta}{precision parameter larger than zero, only used if \code{P_method='SBA'}. Defaults to \code{0.2}.}
+\item{delta}{precision parameter larger than zero, only used if \code{P_method='SBA'}. Defaults to \code{0.5}.}
 
 \item{d}{number of clusters, only used if \code{P_method='spectral_clust'}. Defaults to \code{2}.}
 
@@ -37,5 +37,5 @@ m1 <- list(name='SBM',B=matrix(0.3,2,2),Pi=c(0.5,0.5))
 m2 <- m1; m2$B <- matrix(c(1,0.3,0.3,1),2,2)
 A <- Simulate_netmodel(n=40,model=m1,m=4)$A
 B <- Simulate_netmodel(n=40,model=m2,m=4)$A
-test <- Twosample_thirdpower(A,B,P_method='SBA',delta=0.2)
+test <- Twosample_thirdpower(A,B,P_method='SBA')
 }
