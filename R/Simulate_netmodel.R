@@ -49,7 +49,7 @@
 #'
 #' # (3) DCSBM random Z
 #' Pi3 <- c(0.5,0.5)
-#' theta3 <- runif(n,min=0.8,1.2)
+#' theta3 <- stats::runif(n,min=0.8,1.2)
 #' model3 <- list(name='SBM',B=B2,Pi=Pi3,theta=theta3)
 #' data3 <- Simulate_netmodel(n,model=model3)
 #'
@@ -130,7 +130,7 @@ Simulate_netmodel <- function(n,model=list(),m=1){
                model$Z <- MCMCpack::rdirichlet(n,rep(1,model$d))
              }
              else{
-               model$Z <- matrix(rnorm(n*model$d),nrow=n)
+               model$Z <- matrix(stats::rnorm(n*model$d),nrow=n)
              }
            }
            # generate co-positions if directed + Y is unspecified
@@ -140,7 +140,7 @@ Simulate_netmodel <- function(n,model=list(),m=1){
                  model$Y <- MCMCpack::rdirichlet(n,rep(1,model$d))
                }
                else{
-                 model$Y <- matrix(rnorm(n*model$d),nrow=n)
+                 model$Y <- matrix(stats::rnorm(n*model$d),nrow=n)
                }
              }
            }
@@ -193,12 +193,12 @@ Simulate_netmodel <- function(n,model=list(),m=1){
          wLSM = {
            # generate memberships if Z is unspecified
            if(is.null(model$Z)){
-             model$Z <- matrix(rnorm(n*model$d),nrow=n)
+             model$Z <- matrix(stats::rnorm(n*model$d),nrow=n)
            }
            # generate co-positions if directed + Y is unspecified
            if(model$directed){
              if(is.null(model$Y)){
-               model$Y <- matrix(rnorm(n*model$d),nrow=n)
+               model$Y <- matrix(stats::rnorm(n*model$d),nrow=n)
              }
            }
            else{

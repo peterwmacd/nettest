@@ -58,7 +58,7 @@ data2 <- Simulate_netmodel(n,model=model2)
 
 # (3) DCSBM random Z
 Pi3 <- c(0.5,0.5)
-theta3 <- runif(n,min=0.8,1.2)
+theta3 <- stats::runif(n,min=0.8,1.2)
 model3 <- list(name='SBM',B=B2,Pi=Pi3,theta=theta3)
 data3 <- Simulate_netmodel(n,model=model3)
 

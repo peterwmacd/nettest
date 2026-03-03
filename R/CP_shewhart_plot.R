@@ -32,10 +32,10 @@ CP_shewhart_plots <- function(series,
   }
   # additional plot setup
   if(makeplot & !is.null(pdfname)){
-    pdf(file=pdfname,width=11,height=8)
+    grDevices::pdf(file=pdfname,width=11,height=8)
   }
   nr <- ceiling(sqrt(nplot)); nc <- ceiling(nplot/nr)
-  par(mfrow = c(nr,nc),mar = c(4, 4, 1, 1))
+  graphics::par(mfrow = c(nr,nc),mar = c(4, 4, 1, 1))
   pwmcol <- c('dodgerblue3','sienna2','plum4','darkseagreen3','lightsteelblue2','lightgoldenrod2')
   xind <- as.integer(rownames(series))
   # allocate space for output
@@ -47,7 +47,7 @@ CP_shewhart_plots <- function(series,
 
     y0 <- y[1:baseline]
     m0 <- shew_matrix[jj,1] <- mean(y0,na.rm=TRUE)
-    s0 <- shew_matrix[jj,2] <- sd(y0,na.rm=TRUE)
+    s0 <- shew_matrix[jj,2] <- stats::sd(y0,na.rm=TRUE)
 
     UCL <- m0 + 3 * s0
     LCL <- m0 - 3 * s0
@@ -58,22 +58,22 @@ CP_shewhart_plots <- function(series,
       plot(xind,xind,type='n',ylim = yexpand,
            ylab = yname, xlab = "Index",
            main = '')
-      usr <- par("usr")
-      rect(0, usr[3], baseline, usr[4],
-           col = adjustcolor('gray',0.2),
+      usr <- graphics::par("usr")
+      graphics::rect(0, usr[3], baseline, usr[4],
+           col = grDevices::adjustcolor('gray',0.2),
            border = NA)
-      lines(xind, y, type = "b",col=pwmcol[2])
-      abline(h = m0, col = pwmcol[1], lty=2)
-      abline(h = c(UCL, LCL), col = pwmcol[3], lty =3)
+      graphics::lines(xind, y, type = "b",col=pwmcol[2])
+      graphics::abline(h = m0, col = pwmcol[1], lty=2)
+      graphics::abline(h = c(UCL, LCL), col = pwmcol[3], lty =3)
       if(!is.null(makeCP)){
-        abline(v=makeCP,lty=1,col=pwmcol[4])
+        graphics::abline(v=makeCP,lty=1,col=pwmcol[4])
       }
     }
   }
   # revert plot options
-  par(mfrow=c(1,1))
+  graphics::par(mfrow=c(1,1))
   if(makeplot & !is.null(pdfname)){
-    dev.off()
+    grDevices::dev.off()
   }
   # return Shewhart statistics
   return(shew_matrix)

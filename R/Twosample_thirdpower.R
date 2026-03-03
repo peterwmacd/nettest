@@ -81,7 +81,7 @@ Twosample_thirdpower <- function(A, B, P_method='SBA',delta=0.5,d=2,ndiag=100){
   statvec <- numeric(ndiag)
   for(ii in seq_len(ndiag)){
     Z_temp <- Z
-    diag(Z_temp) <- (1 - 2*rbinom(n,1,0.5))/sqrt(n)
+    diag(Z_temp) <- (1 - 2*stats::rbinom(n,1,0.5))/sqrt(n)
     Z_cubed <- (Z_temp %*% Z_temp) %*% Z_temp
     statvec[ii] <- sum(diag(Z_cubed)) / sqrt(15)
   }

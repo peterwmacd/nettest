@@ -147,7 +147,7 @@ eucdist <- function(X,Y){
   # dimensions
   n <- nrow(X)
   # distance matrix
-  as.matrix(dist(rbind(X,Y)))[1:n,-(1:n)]
+  as.matrix(stats::dist(rbind(X,Y)))[1:n,-(1:n)]
 }
 
 # expit function
@@ -261,7 +261,7 @@ vblock_sd <- function(v,C){
   w <- numeric(K)
   for(kk in seq_len(K)){
     ind <- (C==kk)
-    w[kk] <- sd(v[ind])
+    w[kk] <- stats::sd(v[ind])
   }
   return(w)
 }
