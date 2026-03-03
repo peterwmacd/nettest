@@ -4,9 +4,12 @@
 # nettest
 
 <!-- badges: start -->
+
 <!-- badges: end -->
 
-nettest contains a variety of methods for graph two-sample testing.
+nettest contains a variety of methods for graph two-sample testing and
+changepoint detection for network data, including mesoscale two-sample
+testing.
 
 ## Installation
 
@@ -17,10 +20,3 @@ You can install the development version of nettest from
 # install.packages("devtools")
 devtools::install_github("peterwmacd/nettest")
 ```
-
-Documentation for many test methods, including mesoscale testing.
-
-## Example
-
-For an example using Mesoscale testing, see test_code/mri_pkg.R (NOTE:
-this file and associated data is not loaded in package installation)
